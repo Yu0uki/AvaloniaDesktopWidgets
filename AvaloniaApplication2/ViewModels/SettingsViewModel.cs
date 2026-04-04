@@ -2,6 +2,9 @@ using AvaloniaApplication2.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Platform.Storage;
+using System.Linq;
 
 namespace AvaloniaApplication2.ViewModels
 {
@@ -13,7 +16,7 @@ namespace AvaloniaApplication2.ViewModels
         private readonly SettingsService _settingsService;
 
         [ObservableProperty]
-        private string selectedTheme;
+        private int selectedThemeIndex = 0; // 0=Dark, 1=Light, 2=System
 
         [ObservableProperty]
         private bool autoLoadPlugins;
@@ -32,19 +35,51 @@ namespace AvaloniaApplication2.ViewModels
             _settingsService = settingsService;
             
             // 加载当前设置
-            SelectedTheme = settingsService.Settings.Theme;
+            SelectedThemeIndex = settingsService.Settings.Theme.ToLower() switch
+            {
+                "light" => 1,
+                "system" => 2,
+                _ => 0 // dark
+            };
             AutoLoadPlugins = settingsService.Settings.AutoLoadPlugins;
             PluginsDirectory = settingsService.Settings.PluginsDirectory;
         }
 
         /// <summary>
-        /// 保存主题设置
+        /// 保存主题设置并应用
         /// </summary>
         [RelayCommand]
         private async Task SaveThemeAsync()
         {
-            await _settingsService.UpdateThemeAsync(SelectedTheme);
-            StatusMessage = "主题设置已保存";
+            // 根据索引转换为字符串
+            string themeValue = SelectedThemeIndex switch
+            {
+                1 => "Light",
+                2 => "System",
+                _ => "Dark"
+            };
+            
+            await _settingsService.UpdateThemeAsync(themeValue);
+            ApplyTheme(themeValue);
+            StatusMessage = $"主题已切换为: {themeValue}";
+        }
+
+        /// <summary>
+        /// 应用主题到应用程序
+        /// </summary>
+        private void ApplyTheme(string theme)
+        {
+            if (App.Current == null) return;
+
+            var themeVariant = theme.ToLower() switch
+            {
+                "light" => Avalonia.Styling.ThemeVariant.Light,
+                "dark" => Avalonia.Styling.ThemeVariant.Dark,
+                "system" => Avalonia.Styling.ThemeVariant.Default,
+                _ => Avalonia.Styling.ThemeVariant.Default
+            };
+
+            App.Current.RequestedThemeVariant = themeVariant;
         }
 
         /// <summary>
@@ -71,10 +106,31 @@ namespace AvaloniaApplication2.ViewModels
         /// 选择文件夹
         /// </summary>
         [RelayCommand]
-        private void SelectFolder()
+        private async Task SelectFolderAsync()
         {
-            // TODO: 实现文件夹选择对话框
-            StatusMessage = "请使用文件对话框选择文件夹（功能待实现）";
+            try
+            {
+                // 获取主窗口以显示对话框
+                var mainWindow = App.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime;
+                if (mainWindow?.MainWindow is Window window)
+                {
+                    var folders = await window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+                    {
+                        Title = "选择插件目录",
+                        AllowMultiple = false
+                    });
+
+                    if (folders != null && folders.Count > 0)
+                    {
+                        PluginsDirectory = folders[0].Path.LocalPath;
+                        StatusMessage = $"已选择: {folders[0].Path.LocalPath}";
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                StatusMessage = $"选择文件夹失败: {ex.Message}";
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using AvaloniaApplication2.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.ObjectModel;
 
 namespace AvaloniaApplication2.ViewModels
 {
@@ -8,6 +9,7 @@ namespace AvaloniaApplication2.ViewModels
     {
         private readonly PluginManager _pluginManager;
         private readonly SettingsService _settingsService;
+        private readonly NotificationService _notificationService;
 
         [ObservableProperty]
         private object? currentPage;
@@ -21,10 +23,17 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty]
         private int selectedNavIndex = 0;
 
+        [ObservableProperty]
+        private string statusMessage = "";
+
+        // 通知集合
+        public ObservableCollection<NotificationMessage> Notifications => _notificationService.Notifications;
+
         public MainWindowViewModel(PluginManager pluginManager, SettingsService settingsService)
         {
             _pluginManager = pluginManager;
             _settingsService = settingsService;
+            _notificationService = NotificationService.Instance;
 
             // 默认显示仪表盘
             CurrentPage = new DashboardViewModel(_pluginManager);
@@ -44,7 +53,7 @@ namespace AvaloniaApplication2.ViewModels
         /// 导航到插件管理器
         /// </summary>
         [RelayCommand]
-        private void NavigateToPluginManager()
+        public void NavigateToPluginManager()
         {
             SelectedNavIndex = 1;
             CurrentPage = new PluginManagerViewModel(_pluginManager);

@@ -8,7 +8,7 @@
         Width="1200" Height="750"
         MinWidth="800" MinHeight="500"
         WindowStartupLocation="CenterScreen"
-        Background="#FAFAFA"
+        Background="{DynamicResource WindowBackgroundBrush}"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome">
 
@@ -17,10 +17,15 @@
         <Style Selector="Button.nav-button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
             <Setter Property="Width" Value="60"/>
             <Setter Property="Height" Value="60"/>
             <Setter Property="Margin" Value="0,5"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
         </Style>
         
         <Style Selector="Button.nav-button:pointerover">
@@ -34,17 +39,36 @@
 
         <!-- 卡片样式 -->
         <Style Selector="Border.card">
-            <Setter Property="Background" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="BoxShadow" Value="0 2 8 0 #1A000000"/>
             <Setter Property="Padding" Value="20"/>
             <Setter Property="Margin" Value="10"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        
+        <Style Selector="Border.card:pointerover">
+            <Setter Property="BoxShadow" Value="0 4 12 0 #33000000"/>
+        </Style>
+
+        <!-- 按钮通用样式 -->
+        <Style Selector="Button">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
         </Style>
     </Window.Styles>
 
     <Grid>
         <!-- 自定义标题栏 -->
-        <Border Height="35" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+        <Border Height="35" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -55,14 +79,14 @@
                 <Border Grid.Column="0" Background="Transparent" PointerPressed="OnTitleBarPointerPressed">
                     <StackPanel Orientation="Horizontal" Margin="15,0,0,0">
                         <TextBlock Text="⚡" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock Text="效率工坊" Foreground="#333333" VerticalAlignment="Center" FontSize="13" FontWeight="Medium"/>
+                        <TextBlock Text="效率工坊" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" FontSize="13" FontWeight="Medium"/>
                     </StackPanel>
                 </Border>
 
                 <!-- 窗口控制按钮 -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Content="─" Width="45" Height="35" Click="MinimizeButton_Click" 
-                            Background="Transparent" BorderThickness="0" Foreground="#666666" FontSize="14">
+                            Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14">
                         <Button.Styles>
                             <Style Selector="Button:pointerover">
                                 <Setter Property="Background" Value="#F0F0F0"/>
@@ -70,7 +94,7 @@
                         </Button.Styles>
                     </Button>
                     <Button Name="MaximizeButton" Content="☐" Width="45" Height="35" Click="MaximizeButton_Click"
-                            Background="Transparent" BorderThickness="0" Foreground="#666666" FontSize="12">
+                            Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12">
                         <Button.Styles>
                             <Style Selector="Button:pointerover">
                                 <Setter Property="Background" Value="#F0F0F0"/>
@@ -78,7 +102,7 @@
                         </Button.Styles>
                     </Button>
                     <Button Content="✕" Width="45" Height="35" Click="CloseButton_Click"
-                            Background="Transparent" BorderThickness="0" Foreground="#666666" FontSize="12">
+                            Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12">
                         <Button.Styles>
                             <Style Selector="Button:pointerover">
                                 <Setter Property="Background" Value="#E81123"/>
@@ -98,7 +122,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- 左侧导航栏 -->
-            <Border Grid.Column="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0">
+            <Border Grid.Column="0" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
                 <StackPanel VerticalAlignment="Top">
                     <!-- 仪表盘 -->
                     <Button Classes="nav-button" Command="{Binding NavigateToDashboardCommand}" 
@@ -121,8 +145,42 @@
             </Border>
 
             <!-- 主内容区域 -->
-            <Grid Grid.Column="1" Background="#F5F5F5">
+            <Grid Grid.Column="1" Background="{DynamicResource WindowBackgroundBrush}">
                 <ContentControl Content="{Binding CurrentPage}"/>
+                
+                <!-- 通知区域 -->
+                <Border HorizontalAlignment="Right" VerticalAlignment="Top" 
+                        Margin="0,50,20,0" Width="350" MaxHeight="400"
+                        IsHitTestVisible="False">
+                    <ItemsControl ItemsSource="{Binding Notifications}" 
+                                  HorizontalAlignment="Right">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="6" 
+                                        BoxShadow="0 4 12 0 #33000000"
+                                        Margin="0,0,0,10" Padding="15"
+                                        BorderThickness="3,0,0,0"
+                                        BorderBrush="{Binding Color}"
+                                        IsHitTestVisible="True">
+                                    <StackPanel Spacing="8">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <TextBlock Text="{Binding Icon}" FontSize="18"/>
+                                            <TextBlock Text="{Binding Message}" 
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" 
+                                                       FontSize="13"
+                                                       TextWrapping="Wrap"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Timestamp, StringFormat='HH:mm:ss'}" 
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" 
+                                                   FontSize="11"
+                                                   HorizontalAlignment="Right"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
             </Grid>
         </Grid>
     </Grid>

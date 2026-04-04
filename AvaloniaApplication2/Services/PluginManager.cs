@@ -22,12 +22,14 @@ namespace AvaloniaApplication2.Services
         private readonly Dictionary<string, PluginLoadContext> _pluginContexts = new();
         private readonly ObservableCollection<PluginInfo> _pluginInfos = new();
         private readonly SettingsService _settingsService;
+        private readonly NotificationService _notificationService;
 
         public ObservableCollection<PluginInfo> PluginInfos => _pluginInfos;
 
-        public PluginManager(SettingsService settingsService)
+        public PluginManager(SettingsService settingsService, NotificationService? notificationService = null)
         {
             _settingsService = settingsService;
+            _notificationService = notificationService ?? NotificationService.Instance;
             _pluginsDirectory = Path.GetFullPath(_settingsService.Settings.PluginsDirectory);
             
             // 确保插件目录存在
@@ -117,6 +119,7 @@ namespace AvaloniaApplication2.Services
                 }
 
                 Console.WriteLine($"插件加载成功: {plugin.Name} v{plugin.Version}");
+                _notificationService.ShowSuccess($"插件加载成功: {plugin.Name} v{plugin.Version}");
                 return plugin;
             }
             catch (Exception ex)
@@ -133,6 +136,7 @@ namespace AvaloniaApplication2.Services
                 _pluginInfos.Add(errorInfo);
                 
                 Console.WriteLine($"加载插件失败: {ex.Message}");
+                _notificationService.ShowError($"加载插件失败: {ex.Message}");
                 return null;
             }
         }
@@ -165,6 +169,7 @@ namespace AvaloniaApplication2.Services
                     }
 
                     Console.WriteLine($"插件已卸载: {pluginId}");
+                    _notificationService.ShowInfo($"插件已卸载: {pluginId}");
                 }
                 catch (Exception ex)
                 {
@@ -275,6 +280,7 @@ namespace AvaloniaApplication2.Services
                     await _settingsService.SaveSettingsAsync();
                     
                     Console.WriteLine($"插件已删除: {pluginId}");
+                    _notificationService.ShowSuccess($"插件已删除: {pluginId}");
                 }
                 catch (Exception ex)
                 {

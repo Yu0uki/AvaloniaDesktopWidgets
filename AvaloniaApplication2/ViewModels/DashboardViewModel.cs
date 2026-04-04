@@ -1,6 +1,7 @@
 using AvaloniaApplication2.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Linq;
+using System.Collections.Specialized;
 
 namespace AvaloniaApplication2.ViewModels
 {
@@ -26,6 +27,18 @@ namespace AvaloniaApplication2.ViewModels
         public DashboardViewModel(PluginManager pluginManager)
         {
             _pluginManager = pluginManager;
+            
+            // 监听插件集合变化
+            _pluginManager.PluginInfos.CollectionChanged += OnPluginCollectionChanged;
+            
+            UpdateStatistics();
+        }
+
+        /// <summary>
+        /// 插件集合变化事件处理
+        /// </summary>
+        private void OnPluginCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
             UpdateStatistics();
         }
 
@@ -40,7 +53,7 @@ namespace AvaloniaApplication2.ViewModels
 
             if (TotalPlugins == 0)
             {
-                RecentActivity = "拖拽 DLL 文件到窗口以添加插件";
+                RecentActivity = "拖拽 DLL 文件到窗口任意位置以添加插件";
             }
             else if (LoadedPlugins == 0)
             {
@@ -48,7 +61,8 @@ namespace AvaloniaApplication2.ViewModels
             }
             else
             {
-                RecentActivity = $"{LoadedPlugins} 个插件正在运行";
+                var activePlugins = _pluginManager.PluginInfos.Count(p => p.IsLoaded && p.IsEnabled);
+                RecentActivity = $"{activePlugins} 个插件正在运行 | 总计 {TotalPlugins} 个插件";
             }
         }
 

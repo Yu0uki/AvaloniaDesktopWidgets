@@ -25,7 +25,11 @@ namespace AvaloniaApplication2
 
                 // 初始化服务
                 var settingsService = new SettingsService();
-                var pluginManager = new PluginManager(settingsService);
+                var notificationService = NotificationService.Instance;
+                var pluginManager = new PluginManager(settingsService, notificationService);
+
+                // 应用保存的主题设置
+                ApplySavedTheme(settingsService.Settings.Theme);
 
                 // 创建主窗口 ViewModel
                 var mainWindowViewModel = new MainWindowViewModel(pluginManager, settingsService);
@@ -43,6 +47,22 @@ namespace AvaloniaApplication2
             }
 
             base.OnFrameworkInitializationCompleted();
+        }
+
+        /// <summary>
+        /// 应用保存的主题设置
+        /// </summary>
+        private void ApplySavedTheme(string theme)
+        {
+            var themeVariant = theme.ToLower() switch
+            {
+                "light" => Avalonia.Styling.ThemeVariant.Light,
+                "dark" => Avalonia.Styling.ThemeVariant.Dark,
+                "system" => Avalonia.Styling.ThemeVariant.Default,
+                _ => Avalonia.Styling.ThemeVariant.Dark // 默认深色主题
+            };
+
+            RequestedThemeVariant = themeVariant;
         }
 
         private void DisableAvaloniaDataAnnotationValidation()
