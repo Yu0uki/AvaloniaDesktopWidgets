@@ -1,0 +1,108 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="AvaloniaApplication2.Views.SettingsView"
+             xmlns:converters="clr-namespace:Avalonia.Data.Converters;assembly=Avalonia.Base">
+    
+    <ScrollViewer Padding="30">
+        <StackPanel Spacing="20" MaxWidth="700" HorizontalAlignment="Left">
+            
+            <!-- 标题 -->
+            <StackPanel Spacing="5">
+                <TextBlock Text="系统设置" FontSize="28" FontWeight="Bold" Foreground="#333333"/>
+                <TextBlock Text="{Binding StatusMessage}" FontSize="14" Foreground="#107C10" 
+                           IsVisible="{Binding StatusMessage, Converter={x:Static converters:StringConverters.IsNotNullOrEmpty}}"/>
+            </StackPanel>
+
+            <!-- 外观设置 -->
+            <Border Classes="card">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="外观" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
+                    
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="主题" FontSize="14" Foreground="#666666"/>
+                        <ComboBox SelectedItem="{Binding SelectedTheme}" Width="200" HorizontalAlignment="Left">
+                            <ComboBoxItem Content="深色 (Dark)"/>
+                            <ComboBoxItem Content="浅色 (Light)"/>
+                            <ComboBoxItem Content="跟随系统 (System)"/>
+                        </ComboBox>
+                        <Button Content="保存主题" Height="35" Padding="20,0" 
+                                Background="#0078D4" Foreground="White"
+                                CornerRadius="4" HorizontalAlignment="Left"
+                                Command="{Binding SaveThemeCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 常规设置 -->
+            <Border Classes="card">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="常规" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
+                    
+                    <!-- 自动加载插件 -->
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <CheckBox IsChecked="{Binding AutoLoadPlugins}" VerticalAlignment="Center"/>
+                            <StackPanel VerticalAlignment="Center" Spacing="3">
+                                <TextBlock Text="启动时自动加载插件" FontSize="14" Foreground="#333333"/>
+                                <TextBlock Text="应用程序启动时自动加载 Plugins 目录中的所有插件" 
+                                           FontSize="12" Foreground="#999999"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Content="保存设置" Height="35" Padding="20,0" 
+                                Background="#0078D4" Foreground="White"
+                                CornerRadius="4" HorizontalAlignment="Left"
+                                Command="{Binding SaveAutoLoadCommand}"/>
+                    </StackPanel>
+
+                    <Separator Background="#E0E0E0" Margin="0,10"/>
+
+                    <!-- 插件目录 -->
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="插件目录" FontSize="14" Foreground="#666666"/>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <TextBox Grid.Column="0" Text="{Binding PluginsDirectory}" 
+                                     Watermark="插件目录路径"/>
+                            <Button Grid.Column="1" Content="浏览..." Height="35" Padding="15,0"
+                                    Background="White" Foreground="#0078D4"
+                                    CornerRadius="4" BorderBrush="#0078D4" BorderThickness="1"
+                                    Command="{Binding SelectFolderCommand}"/>
+                        </Grid>
+                        <Button Content="保存路径" Height="35" Padding="20,0" 
+                                Background="#0078D4" Foreground="White"
+                                CornerRadius="4" HorizontalAlignment="Left"
+                                Command="{Binding SavePluginsDirectoryCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 关于 -->
+            <Border Classes="card">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="关于" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
+                    
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="应用名称:" FontSize="13" Foreground="#666666"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="效率工坊" FontSize="13" Foreground="#333333"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="版本号:" FontSize="13" Foreground="#666666"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AppVersion}" FontSize="13" Foreground="#333333"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="框架:" FontSize="13" Foreground="#666666"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="Avalonia UI 11.3.11" FontSize="13" Foreground="#333333"/>
+                        </Grid>
+                        
+                        <Separator Background="#E0E0E0" Margin="0,10"/>
+                        
+                        <TextBlock Text="效率工坊是一个插件化桌面平台，支持通过拖拽 DLL 文件动态加载插件。" 
+                                   FontSize="13" Foreground="#666666" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

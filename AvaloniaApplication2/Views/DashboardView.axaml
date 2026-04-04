@@ -1,0 +1,91 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="AvaloniaApplication2.Views.DashboardView">
+    
+    <ScrollViewer Padding="30">
+        <StackPanel Spacing="20">
+            
+            <!-- 欢迎标题 -->
+            <StackPanel Spacing="5">
+                <TextBlock Text="欢迎使用效率工坊" FontSize="28" FontWeight="Bold" Foreground="#333333"/>
+                <TextBlock Text="{Binding RecentActivity}" FontSize="14" Foreground="#666666"/>
+            </StackPanel>
+
+            <!-- 统计卡片 -->
+            <Grid ColumnDefinitions="*,*,*">
+                <Grid.ColumnSpacing>15</Grid.ColumnSpacing>
+                
+                <!-- 总插件数 -->
+                <Border Grid.Column="0" Classes="card">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="📦" FontSize="32"/>
+                        <TextBlock Text="已安装插件" FontSize="13" Foreground="#666666"/>
+                        <TextBlock Text="{Binding TotalPlugins}" FontSize="32" FontWeight="Bold" Foreground="#0078D4"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 运行中插件 -->
+                <Border Grid.Column="1" Classes="card">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="▶️" FontSize="32"/>
+                        <TextBlock Text="运行中" FontSize="13" Foreground="#666666"/>
+                        <TextBlock Text="{Binding LoadedPlugins}" FontSize="32" FontWeight="Bold" Foreground="#107C10"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 已启用插件 -->
+                <Border Grid.Column="2" Classes="card">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="✓" FontSize="32"/>
+                        <TextBlock Text="已启用" FontSize="13" Foreground="#666666"/>
+                        <TextBlock Text="{Binding EnabledPlugins}" FontSize="32" FontWeight="Bold" Foreground="#FFB900"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 快速操作 -->
+            <Border Classes="card">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="快速操作" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
+                    
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
+                        <Button Grid.Column="0" Height="45" Background="#0078D4" Foreground="White" 
+                                CornerRadius="6" FontSize="14" FontWeight="Medium"
+                                Command="{Binding $parent[UserControl].DataContext.NavigateToPluginManagerCommand}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                                <TextBlock Text="📦" FontSize="16"/>
+                                <TextBlock Text="管理插件"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Column="1" Height="45" Background="White" Foreground="#0078D4"
+                                CornerRadius="6" FontSize="14" FontWeight="Medium"
+                                BorderBrush="#0078D4" BorderThickness="1.5"
+                                Command="{Binding $parent[UserControl].DataContext.NavigateToSettingsCommand}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                                <TextBlock Text="⚙️" FontSize="16"/>
+                                <TextBlock Text="系统设置"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 提示信息 -->
+            <Border Classes="card" Background="#E3F2FD">
+                <StackPanel Orientation="Horizontal" Spacing="15">
+                    <TextBlock Text="💡" FontSize="24" VerticalAlignment="Center"/>
+                    <StackPanel VerticalAlignment="Center" Spacing="5">
+                        <TextBlock Text="提示" FontSize="14" FontWeight="SemiBold" Foreground="#0078D4"/>
+                        <TextBlock Text="拖拽 DLL 文件到窗口任意位置即可快速加载插件" 
+                                   FontSize="13" Foreground="#555555" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

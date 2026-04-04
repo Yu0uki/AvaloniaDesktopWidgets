@@ -1,0 +1,28 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AvaloniaApplication2.App"
+             xmlns:local="using:AvaloniaApplication2"
+             xmlns:vm="using:AvaloniaApplication2.ViewModels"
+             xmlns:views="using:AvaloniaApplication2.Views"
+             RequestedThemeVariant="Dark">
+
+    <Application.DataTemplates>
+        <!-- ViewModel 到 View 的映射 -->
+        <DataTemplate DataType="vm:DashboardViewModel">
+            <views:DashboardView/>
+        </DataTemplate>
+        <DataTemplate DataType="vm:PluginManagerViewModel">
+            <views:PluginManagerView/>
+        </DataTemplate>
+        <DataTemplate DataType="vm:SettingsViewModel">
+            <views:SettingsView/>
+        </DataTemplate>
+        
+        <!-- 保留 ViewLocator 作为备用 -->
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+  
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+</Application>

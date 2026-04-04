@@ -1,0 +1,129 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="750"
+        x:Class="AvaloniaApplication2.MainWindow"
+        Title="{Binding WindowTitle}"
+        Width="1200" Height="750"
+        MinWidth="800" MinHeight="500"
+        WindowStartupLocation="CenterScreen"
+        Background="#FAFAFA"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome">
+
+    <Window.Styles>
+        <!-- 导航按钮样式 -->
+        <Style Selector="Button.nav-button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="Width" Value="60"/>
+            <Setter Property="Height" Value="60"/>
+            <Setter Property="Margin" Value="0,5"/>
+        </Style>
+        
+        <Style Selector="Button.nav-button:pointerover">
+            <Setter Property="Background" Value="#F0F0F0"/>
+        </Style>
+        
+        <Style Selector="Button.nav-button:selected">
+            <Setter Property="Background" Value="#E3F2FD"/>
+            <Setter Property="Foreground" Value="#0078D4"/>
+        </Style>
+
+        <!-- 卡片样式 -->
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BoxShadow" Value="0 2 8 0 #1A000000"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="10"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <!-- 自定义标题栏 -->
+        <Border Height="35" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 标题和拖拽区域 -->
+                <Border Grid.Column="0" Background="Transparent" PointerPressed="OnTitleBarPointerPressed">
+                    <StackPanel Orientation="Horizontal" Margin="15,0,0,0">
+                        <TextBlock Text="⚡" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="效率工坊" Foreground="#333333" VerticalAlignment="Center" FontSize="13" FontWeight="Medium"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 窗口控制按钮 -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="─" Width="45" Height="35" Click="MinimizeButton_Click" 
+                            Background="Transparent" BorderThickness="0" Foreground="#666666" FontSize="14">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#F0F0F0"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Button Name="MaximizeButton" Content="☐" Width="45" Height="35" Click="MaximizeButton_Click"
+                            Background="Transparent" BorderThickness="0" Foreground="#666666" FontSize="12">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#F0F0F0"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Button Content="✕" Width="45" Height="35" Click="CloseButton_Click"
+                            Background="Transparent" BorderThickness="0" Foreground="#666666" FontSize="12">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#E81123"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 主内容区 -->
+        <Grid Margin="0,35,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 左侧导航栏 -->
+            <Border Grid.Column="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0">
+                <StackPanel VerticalAlignment="Top">
+                    <!-- 仪表盘 -->
+                    <Button Classes="nav-button" Command="{Binding NavigateToDashboardCommand}" 
+                            ToolTip.Tip="仪表盘">
+                        <TextBlock Text="🏠" FontSize="20" HorizontalAlignment="Center"/>
+                    </Button>
+
+                    <!-- 插件管理 -->
+                    <Button Classes="nav-button" Command="{Binding NavigateToPluginManagerCommand}"
+                            ToolTip.Tip="插件管理">
+                        <TextBlock Text="📦" FontSize="20" HorizontalAlignment="Center"/>
+                    </Button>
+
+                    <!-- 设置 -->
+                    <Button Classes="nav-button" Command="{Binding NavigateToSettingsCommand}"
+                            ToolTip.Tip="设置">
+                        <TextBlock Text="⚙️" FontSize="20" HorizontalAlignment="Center"/>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- 主内容区域 -->
+            <Grid Grid.Column="1" Background="#F5F5F5">
+                <ContentControl Content="{Binding CurrentPage}"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
