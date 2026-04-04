@@ -1,0 +1,278 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="AvaloniaApplication2.MainWindow"
+        Title="效率工坊 - 插件化桌面平台"
+        Width="1200" Height="750"
+        MinWidth="800" MinHeight="500"
+        WindowStartupLocation="CenterScreen"
+        Background="White"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome">
+
+    
+    <!-- 自定义窗口样式 -->
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="#3E3E40"/>
+        </Style>
+        
+        <Style Selector="ListBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        
+        <Style Selector="ListBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="#094771"/>
+        </Style>
+        
+        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2A2A2C"/>
+        </Style>
+    </Window.Styles>
+    
+    <Grid>
+        <!-- 顶部自定义标题栏 -->
+        <Border Height="40" Background="#2D2D30">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- 应用标题和拖拽区域 -->
+                <Border Grid.Column="0" Background="Transparent" 
+                        PointerPressed="OnTitleBarPointerPressed">
+                    <TextBlock Text="效率工坊" 
+                               Foreground="White" 
+                               VerticalAlignment="Center" 
+                               HorizontalAlignment="Left"
+                               Margin="15,0,0,0"
+                               FontSize="14"/>
+                </Border>
+                
+                <!-- 窗口控制按钮 -->
+                <StackPanel Grid.Column="1" 
+                            Orientation="Horizontal" 
+                            HorizontalAlignment="Right"
+                            Background="Transparent">
+                    <Button Name="MinimizeButton" 
+                            Content="_" 
+                            Width="40" 
+                            Height="40" 
+                            Click="MinimizeButton_Click"
+                            ToolTip.Tip="最小化"/>
+                    
+                    <Button Name="MaximizeButton" 
+                            Content="口" 
+                            Width="40" 
+                            Height="40" 
+                            Click="MaximizeButton_Click"
+                            ToolTip.Tip="最大化"/>
+                    
+                    <Button Name="CloseButton" 
+                            Content="X" 
+                            Width="40" 
+                            Height="40" 
+                            Click="CloseButton_Click"
+                            ToolTip.Tip="关闭"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- 主内容区域 -->
+        <Grid Margin="0,40,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- 左侧导航栏 -->
+            <Border Grid.Column="0" 
+                    Background="#252526" 
+                    BorderThickness="0,0,1,0" 
+                    BorderBrush="#3E3E40">
+                <StackPanel>
+                    <!-- 仪表盘按钮 -->
+                    <Button Height="50" 
+                            HorizontalAlignment="Stretch"
+                            Click="DashboardButton_Click"
+                            Padding="0"
+                            Margin="0,5,0,0">
+                        <StackPanel Orientation="Horizontal" Margin="15,0">
+                            <!-- 使用更简单的图标路径数据 -->
+                            <Path Data="M3,13 H11 V3 H3 Z M3,21 H11 V15 H3 Z M13,21 H21 V11 H13 Z M13,3 V9 H21 V3 Z"
+                                  Width="16" 
+                                  Height="16" 
+                                  Fill="White" 
+                                  Stretch="Uniform"/>
+                            <TextBlock Text="仪表盘" 
+                                       Foreground="White" 
+                                       Margin="10,0,0,0"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <!-- 插件列表标题 -->
+                    <TextBlock Text="插件" 
+                               Foreground="#858585" 
+                               Margin="15,20,0,5" 
+                               FontSize="12"/>
+                    
+                    <!-- 插件列表 -->
+                    <ListBox Name="PluginListBox" 
+                             Margin="0,5,0,0"
+                             SelectionMode="Single"
+                             SelectedIndex="0"
+                             SelectionChanged="PluginListBox_SelectionChanged">
+                        <ListBoxItem>
+                            <StackPanel Orientation="Horizontal" Margin="15,5">
+                                <Border Width="30" 
+                                        Height="30" 
+                                        Background="#424242" 
+                                        CornerRadius="5"
+                                        VerticalAlignment="Center">
+                                    <Path Data="M12,2 A10,10 0 1,0 12,22 A10,10 0 1,0 12,2 M12,4 A8,8 0 1,1 12,20 A8,8 0 1,1 12,4 M12,6 H11 V12 L5,15 L6,13 L10.5,10.5 V6"
+                                          Width="16" 
+                                          Height="16" 
+                                          Fill="White" 
+                                          Stretch="Uniform"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="时钟插件" 
+                                           Foreground="White" 
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem>
+                            <StackPanel Orientation="Horizontal" Margin="15,5">
+                                <Border Width="30" 
+                                        Height="30" 
+                                        Background="#424242" 
+                                        CornerRadius="5"
+                                        VerticalAlignment="Center">
+                                    <Path Data="M6,2 H14 L20,8 V20 A2,2 0 0,1 18,22 H6 A2,2 0 0,1 4,20 V4 A2,2 0 0,1 6,2 M13,3 V9 H19 M8,12 H16 M8,16 H12"
+                                          Width="16" 
+                                          Height="16" 
+                                          Fill="White" 
+                                          Stretch="Uniform"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="记事本插件" 
+                                           Foreground="White" 
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem>
+                            <StackPanel Orientation="Horizontal" Margin="15,5">
+                                <Border Width="30" 
+                                        Height="30" 
+                                        Background="#424242" 
+                                        CornerRadius="5"
+                                        VerticalAlignment="Center">
+                                    <Path Data="M12,2 A1,1 0 0,0 11,3 V4 A8,8 0 0,0 12,20 A8,8 0 0,0 20,12 A8,8 0 0,0 12,4 V3 A1,1 0 0,0 12,2 M12,6 V12 L16,14"
+                                          Width="16" 
+                                          Height="16" 
+                                          Fill="White" 
+                                          Stretch="Uniform"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="天气预报" 
+                                           Foreground="White" 
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                    </ListBox>
+                </StackPanel>
+            </Border>
+            
+            <!-- 中间内容区 -->
+            <Border Grid.Column="1" 
+                    Background="#1E1E1E"
+                    Name="ContentArea">
+                <StackPanel HorizontalAlignment="Center" 
+                            VerticalAlignment="Center"
+                            Spacing="20">
+                    <TextBlock Text="效率工坊" 
+                               Foreground="White" 
+                               FontSize="24"
+                               FontWeight="Bold"/>
+                    <TextBlock Text="请从左侧选择一个插件" 
+                               Foreground="#858585" 
+                               FontSize="16"/>
+                </StackPanel>
+            </Border>
+            
+            <!-- 右侧信息面板 -->
+            <Border Grid.Column="2" 
+                    Background="#252526" 
+                    BorderThickness="1,0,0,0" 
+                    BorderBrush="#3E3E40"
+                    Name="InfoPanel">
+                <StackPanel Margin="20">
+                    <TextBlock Text="插件信息" 
+                               Foreground="White" 
+                               FontSize="16" 
+                               FontWeight="Bold"/>
+                    
+                    <Separator Background="#3E3E40" 
+                               Margin="0,10,0,20"/>
+                    
+                    <StackPanel Name="PluginInfoContent" 
+                                Spacing="10">
+                        <TextBlock Text="选择插件以查看详细信息" 
+                                   Foreground="#858585" 
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                    
+                    <!-- 插件控制按钮区域 -->
+                    <StackPanel Margin="0,20,0,0" 
+                                Spacing="10"
+                                Name="PluginControlsPanel">
+                        <Button Content="启用插件" 
+                                Height="35" 
+                                Background="#007ACC"
+                                Foreground="White"
+                                CornerRadius="3"
+                                HorizontalAlignment="Stretch"/>
+                        
+                        <Button Content="设置" 
+                                Height="35" 
+                                Background="#3E3E40"
+                                Foreground="White"
+                                CornerRadius="3"
+                                HorizontalAlignment="Stretch"/>
+                        
+                        <Button Content="卸载插件" 
+                                Height="35" 
+                                Background="#A1260D"
+                                Foreground="White"
+                                CornerRadius="3"
+                                HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
