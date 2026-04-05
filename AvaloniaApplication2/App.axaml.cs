@@ -3,6 +3,8 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using AvaloniaApplication2.Services;
+using AvaloniaApplication2.ViewModels;
 using System.Linq;
 
 namespace AvaloniaApplication2
@@ -18,26 +20,56 @@ namespace AvaloniaApplication2
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
-                // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
+                // 禁用重复的数据验证
                 DisableAvaloniaDataAnnotationValidation();
-                desktop.MainWindow = new MainWindow
+
+                // 初始化服务
+                var settingsService = new SettingsService();
+                var notificationService = NotificationService.Instance;
+                var pluginManager = new PluginManager(settingsService, notificationService);
+
+                // 应用保存的主题设置
+                ApplySavedTheme(settingsService.Settings.Theme);
+
+                // 创建主窗口 ViewModel
+                var mainWindowViewModel = new MainWindowViewModel(pluginManager, settingsService);
+
+                // 创建主窗口
+                var mainWindow = new MainWindow
                 {
-                    // 如果你的项目中有 ViewModel，可以在这里设置
-                    // DataContext = new MainWindowViewModel(),
+                    DataContext = mainWindowViewModel
                 };
+
+                desktop.MainWindow = mainWindow;
+
+                // 异步加载插件
+                _ = pluginManager.LoadPluginsAsync();
             }
 
             base.OnFrameworkInitializationCompleted();
         }
 
+        /// <summary>
+        /// 应用保存的主题设置
+        /// </summary>
+        private void ApplySavedTheme(string theme)
+        {
+            var themeVariant = theme.ToLower() switch
+            {
+                "light" => Avalonia.Styling.ThemeVariant.Light,
+                "dark" => Avalonia.Styling.ThemeVariant.Dark,
+                "system" => Avalonia.Styling.ThemeVariant.Default,
+                _ => Avalonia.Styling.ThemeVariant.Dark // 默认深色主题
+            };
+
+            RequestedThemeVariant = themeVariant;
+        }
+
         private void DisableAvaloniaDataAnnotationValidation()
         {
-            // Get an array of plugins to remove
             var dataValidationPluginsToRemove =
                 BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
 
-            // remove each entry found
             foreach (var plugin in dataValidationPluginsToRemove)
             {
                 BindingPlugins.DataValidators.Remove(plugin);

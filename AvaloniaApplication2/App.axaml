@@ -2,14 +2,62 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="AvaloniaApplication2.App"
              xmlns:local="using:AvaloniaApplication2"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             xmlns:vm="using:AvaloniaApplication2.ViewModels"
+             xmlns:views="using:AvaloniaApplication2.Views">
 
     <Application.DataTemplates>
+        <!-- ViewModel 到 View 的映射 -->
+        <DataTemplate DataType="vm:DashboardViewModel">
+            <views:DashboardView/>
+        </DataTemplate>
+        <DataTemplate DataType="vm:PluginManagerViewModel">
+            <views:PluginManagerView/>
+        </DataTemplate>
+        <DataTemplate DataType="vm:SettingsViewModel">
+            <views:SettingsView/>
+        </DataTemplate>
+        
+        <!-- 保留 ViewLocator 作为备用 -->
         <local:ViewLocator/>
     </Application.DataTemplates>
   
     <Application.Styles>
         <FluentTheme />
     </Application.Styles>
+    
+    <!-- 全局深色主题样式 -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Dark">
+                    <Color x:Key="WindowBackgroundColor">#1E1E1E</Color>
+                    <Color x:Key="CardBackgroundColor">#2D2D2D</Color>
+                    <Color x:Key="TextPrimaryColor">#FFFFFF</Color>
+                    <Color x:Key="TextSecondaryColor">#B0B0B0</Color>
+                    <Color x:Key="BorderColor">#3F3F3F</Color>
+                    <Color x:Key="AccentColor">#4FC3F7</Color>
+                    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{DynamicResource WindowBackgroundColor}"/>
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{DynamicResource CardBackgroundColor}"/>
+                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{DynamicResource TextPrimaryColor}"/>
+                    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{DynamicResource TextSecondaryColor}"/>
+                    <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderColor}"/>
+                    <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource AccentColor}"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Light">
+                    <Color x:Key="WindowBackgroundColor">#FAFAFA</Color>
+                    <Color x:Key="CardBackgroundColor">#FFFFFF</Color>
+                    <Color x:Key="TextPrimaryColor">#333333</Color>
+                    <Color x:Key="TextSecondaryColor">#666666</Color>
+                    <Color x:Key="BorderColor">#E0E0E0</Color>
+                    <Color x:Key="AccentColor">#0078D4</Color>
+                    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{DynamicResource WindowBackgroundColor}"/>
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{DynamicResource CardBackgroundColor}"/>
+                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{DynamicResource TextPrimaryColor}"/>
+                    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{DynamicResource TextSecondaryColor}"/>
+                    <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderColor}"/>
+                    <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource AccentColor}"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>

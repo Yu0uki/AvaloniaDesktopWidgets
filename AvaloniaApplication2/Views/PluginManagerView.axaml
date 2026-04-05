@@ -1,0 +1,130 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="AvaloniaApplication2.Views.PluginManagerView"
+             xmlns:converters="clr-namespace:Avalonia.Data.Converters;assembly=Avalonia.Base">
+    
+    <Grid>
+        <!-- 拖拽覆盖层 -->
+        <Border IsVisible="{Binding IsDragOver}" 
+                Background="#800078D4" ZIndex="999"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="15">
+                <TextBlock Text="📦" FontSize="64" Foreground="White"/>
+                <TextBlock Text="释放以加载插件" FontSize="20" Foreground="White" FontWeight="Medium"/>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Padding="30">
+            <StackPanel Spacing="20">
+                
+                <!-- 标题栏 -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="插件管理" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding StatusMessage}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                </StackPanel>
+
+                <!-- 拖拽区域提示 -->
+                <Border Classes="card" BorderBrush="#0078D4" BorderThickness="2" 
+                        Background="#F0F8FF" Padding="40">
+                    <StackPanel HorizontalAlignment="Center" Spacing="10">
+                        <TextBlock Text="📥" FontSize="48" HorizontalAlignment="Center"/>
+                        <TextBlock Text="拖拽 DLL 文件到此处" FontSize="16" Foreground="#0078D4" 
+                                   HorizontalAlignment="Center" FontWeight="Medium"/>
+                        <TextBlock Text="或者将文件拖拽到窗口任意位置" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" 
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 插件列表 -->
+                <StackPanel Spacing="10">
+                    <TextBlock Text="已安装的插件" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    
+                    <ItemsControl ItemsSource="{Binding Plugins}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Classes="card" Margin="0,0,0,10">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <Grid.ColumnSpacing>15</Grid.ColumnSpacing>
+                                        
+                                        <!-- 插件图标 -->
+                                        <Border Grid.Column="0" Width="50" Height="50" 
+                                                Background="#F0F0F0" CornerRadius="8"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="🔌" FontSize="24" 
+                                                       HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+
+                                        <!-- 插件信息 -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="5">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{Binding Name}" FontSize="16" 
+                                                           FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                <TextBlock Text="{Binding Version}" FontSize="12" 
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Description}" FontSize="13" 
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Author}" FontSize="12" 
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                            
+                                            <!-- 错误信息 -->
+                                            <TextBlock Text="{Binding Error}" FontSize="12" 
+                                                       Foreground="#D13438" TextWrapping="Wrap"
+                                                       IsVisible="{Binding Error, Converter={x:Static converters:StringConverters.IsNotNullOrEmpty}}"/>
+                                        </StackPanel>
+
+                                        <!-- 操作按钮 -->
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                                                    VerticalAlignment="Center">
+                                            <!-- 启用/禁用开关 -->
+                                            <ToggleButton Width="50" Height="28" 
+                                                          IsChecked="{Binding IsEnabled}">
+                                                <ToggleButton.Styles>
+                                                    <Style Selector="ToggleButton:checked">
+                                                        <Setter Property="Background" Value="#107C10"/>
+                                                    </Style>
+                                                </ToggleButton.Styles>
+                                            </ToggleButton>
+
+                                            <!-- 打开插件 -->
+                                            <Button Content="打开" Height="32" Padding="15,0"
+                                                    Background="#0078D4" Foreground="White"
+                                                    CornerRadius="4" FontSize="12"
+                                                    Command="{Binding $parent[ItemsControl].DataContext.OpenPluginCommand}"
+                                                    CommandParameter="{Binding Id}"
+                                                    IsEnabled="{Binding IsEnabled}"/>
+
+                                            <!-- 卸载 -->
+                                            <Button Content="卸载" Height="32" Padding="15,0"
+                                                    Background="{DynamicResource CardBackgroundBrush}" Foreground="#D13438"
+                                                    CornerRadius="4" FontSize="12"
+                                                    BorderBrush="#D13438" BorderThickness="1"
+                                                    Command="{Binding $parent[ItemsControl].DataContext.UninstallPluginCommand}"
+                                                    CommandParameter="{Binding Id}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- 空状态 -->
+                    <Border Name="EmptyStateBorder" Classes="card" Padding="60">
+                        <StackPanel HorizontalAlignment="Center" Spacing="15">
+                            <TextBlock Text="📭" FontSize="64" HorizontalAlignment="Center"/>
+                            <TextBlock Text="暂无插件" FontSize="18" Foreground="{DynamicResource TextSecondaryBrush}" 
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="拖拽 DLL 文件到上方区域或窗口任意位置开始添加插件" FontSize="14" 
+                                       Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
