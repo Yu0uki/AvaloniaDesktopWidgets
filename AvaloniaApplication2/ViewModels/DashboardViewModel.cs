@@ -1,3 +1,4 @@
+using AvaloniaApplication2.Core;
 using AvaloniaApplication2.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Linq;
@@ -31,6 +32,12 @@ namespace AvaloniaApplication2.ViewModels
             // 监听插件集合变化
             _pluginManager.PluginInfos.CollectionChanged += OnPluginCollectionChanged;
             
+            // 监听每个插件的属性变化
+            foreach (var plugin in _pluginManager.PluginInfos)
+            {
+                plugin.PropertyChanged += OnPluginPropertyChanged;
+            }
+            
             UpdateStatistics();
         }
 
@@ -39,7 +46,44 @@ namespace AvaloniaApplication2.ViewModels
         /// </summary>
         private void OnPluginCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
+            // 为新添加的插件订阅属性变化事件
+            if (e.NewItems != null)
+            {
+                foreach (var item in e.NewItems)
+                {
+                    if (item is PluginInfo plugin)
+                    {
+                        plugin.PropertyChanged += OnPluginPropertyChanged;
+                    }
+                }
+            }
+            
+            // 为移除的插件取消订阅
+            if (e.OldItems != null)
+            {
+                foreach (var item in e.OldItems)
+                {
+                    if (item is PluginInfo plugin)
+                    {
+                        plugin.PropertyChanged -= OnPluginPropertyChanged;
+                    }
+                }
+            }
+            
             UpdateStatistics();
+        }
+
+        /// <summary>
+        /// 插件属性变化事件处理
+        /// </summary>
+        private void OnPluginPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            // 当 IsEnabled 或 IsLoaded 属性变化时更新统计
+            if (e.PropertyName == nameof(PluginInfo.IsEnabled) || 
+                e.PropertyName == nameof(PluginInfo.IsLoaded))
+            {
+                UpdateStatistics();
+            }
         }
 
         /// <summary>

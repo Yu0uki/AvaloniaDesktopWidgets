@@ -3,7 +3,8 @@
              x:Class="AvaloniaApplication2.App"
              xmlns:local="using:AvaloniaApplication2"
              xmlns:vm="using:AvaloniaApplication2.ViewModels"
-             xmlns:views="using:AvaloniaApplication2.Views">
+             xmlns:views="using:AvaloniaApplication2.Views"
+             xmlns:converters="using:AvaloniaApplication2.Converters">
 
     <Application.DataTemplates>
         <!-- ViewModel 到 View 的映射 -->
@@ -28,6 +29,11 @@
     <!-- 全局深色主题样式 -->
     <Application.Resources>
         <ResourceDictionary>
+            <!-- 注册转换器 -->
+            <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
+            <converters:BoolToBrushConverter x:Key="BoolToBrushConverter"/>
+            <converters:IntToBoolConverter x:Key="IntToBoolConverter"/>
+            
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Dark">
                     <Color x:Key="WindowBackgroundColor">#1E1E1E</Color>

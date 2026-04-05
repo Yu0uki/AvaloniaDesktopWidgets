@@ -10,17 +10,15 @@ namespace AvaloniaApplication2
     public partial class MainWindow : Window
     {
         private MainWindowViewModel? _viewModel;
+        private bool _isDragOver;
 
         public MainWindow()
         {
             InitializeComponent();
-
-            // 设置初始窗口状态
-            this.ExtendClientAreaToDecorationsHint = true;
-            this.ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome;
-            this.ExtendClientAreaTitleBarHeightHint = 35;
             
             // 启用拖拽事件处理
+            this.AddHandler(DragDrop.DragEnterEvent, OnDragEnter);
+            this.AddHandler(DragDrop.DragLeaveEvent, OnDragLeave);
             this.AddHandler(DragDrop.DropEvent, OnDrop);
         }
 
@@ -28,55 +26,15 @@ namespace AvaloniaApplication2
         {
             base.OnDataContextChanged(e);
             _viewModel = DataContext as MainWindowViewModel;
-            
-            // 注册全局拖拽事件
-            this.AddHandler(DragDrop.DragEnterEvent, OnDragEnter);
-            this.AddHandler(DragDrop.DragLeaveEvent, OnDragLeave);
-            this.AddHandler(DragDrop.DropEvent, OnDrop);
         }
-
-        #region 标题栏事件处理
-        
-        private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
-        {
-            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
-            {
-                BeginMoveDrag(e);
-            }
-        }
-
-        private void MinimizeButton_Click(object? sender, RoutedEventArgs e)
-        {
-            this.WindowState = WindowState.Minimized;
-        }
-
-        private void MaximizeButton_Click(object? sender, RoutedEventArgs e)
-        {
-            if (this.WindowState == WindowState.Maximized)
-            {
-                this.WindowState = WindowState.Normal;
-                if (MaximizeButton != null)
-                    MaximizeButton.Content = "☐";
-            }
-            else
-            {
-                this.WindowState = WindowState.Maximized;
-                if (MaximizeButton != null)
-                    MaximizeButton.Content = "❐";
-            }
-        }
-
-        private void CloseButton_Click(object? sender, RoutedEventArgs e)
-        {
-            Close();
-        }
-        
-        #endregion
 
         #region 拖拽处理
 
         private async void OnDragEnter(object? sender, DragEventArgs e)
         {
+            // 防止重复触发
+            if (_isDragOver) return;
+
             // 检查是否包含文件
             if (e.Data.Contains(Avalonia.Input.DataFormats.Files))
             {
@@ -88,6 +46,7 @@ namespace AvaloniaApplication2
                     // 如果当前是插件管理器页面，触发视觉反馈
                     if (_viewModel?.CurrentPage is PluginManagerViewModel pluginVM)
                     {
+                        _isDragOver = true;
                         pluginVM.OnDragEnter();
                     }
                 }
@@ -105,14 +64,18 @@ namespace AvaloniaApplication2
         private void OnDragLeave(object? sender, DragEventArgs e)
         {
             // 如果当前是插件管理器页面，清除视觉反馈
-            if (_viewModel?.CurrentPage is PluginManagerViewModel pluginVM)
+            if (_isDragOver && _viewModel?.CurrentPage is PluginManagerViewModel pluginVM)
             {
+                _isDragOver = false;
                 pluginVM.OnDragLeave();
             }
         }
 
         private async void OnDrop(object? sender, DragEventArgs e)
         {
+            // 重置拖拽状态
+            _isDragOver = false;
+
             var dataObject = e.Data;
             if (dataObject.Contains(Avalonia.Input.DataFormats.Files))
             {

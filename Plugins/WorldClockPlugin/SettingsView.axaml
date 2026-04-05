@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:WorldClockPlugin.ViewModels"
+             x:DataType="viewModels:SettingsViewModel"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             x:Class="WorldClockPlugin.SettingsView">
+
+  <UserControl.DataContext>
+    <viewModels:SettingsViewModel />
+  </UserControl.DataContext>
+
+  <Design.DataContext>
+    <viewModels:SettingsViewModel />
+  </Design.DataContext>
+
+  <ScrollViewer Padding="20">
+    <StackPanel Spacing="20" MaxWidth="500">
+      <TextBlock Text="⚙️ 世界时钟设置" FontSize="20" FontWeight="Bold"/>
+
+      <!-- 时间格式设置 -->
+      <Border Background="#F5F5F5" CornerRadius="8" Padding="15">
+        <StackPanel Spacing="10">
+          <TextBlock Text="📅 时间格式" FontWeight="Bold" FontSize="16"/>
+          
+          <StackPanel Spacing="5">
+            <TextBlock Text="自定义时间格式:" FontSize="13" Foreground="#666666"/>
+            <TextBox Text="{Binding TimeFormat}" 
+                     Watermark="例如: yyyy-MM-dd HH:mm:ss"
+                     Height="35"/>
+            <TextBlock Text="常用格式: yyyy-MM-dd HH:mm:ss, MM/dd/yyyy hh:mm tt" 
+                       FontSize="11" Foreground="#999999"/>
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Spacing="15">
+            <CheckBox Content="显示秒数" IsChecked="{Binding ShowSeconds}"/>
+            <CheckBox Content="24小时制" IsChecked="{Binding Use24HourFormat}"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- 窗口设置 -->
+      <Border Background="#E3F2FD" CornerRadius="8" Padding="15">
+        <StackPanel Spacing="10">
+          <TextBlock Text="🖼️ 窗口设置" FontWeight="Bold" FontSize="16"/>
+          
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <CheckBox Content="独立窗口模式" IsChecked="{Binding IsIndependentWindow}"/>
+          </StackPanel>
+          
+          <TextBlock Text="启用后，世界时钟将在独立窗口中显示" 
+                     FontSize="12" Foreground="#666666" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <!-- 保存按钮 -->
+      <Button Content="💾 保存设置" 
+              HorizontalAlignment="Right"
+              Width="120" Height="40"
+              Classes="accent"
+              Command="{Binding SaveSettingsCommand}"/>
+
+      <TextBlock Text="💡 提示: 设置会在下次启动时生效" 
+                 FontSize="11" Foreground="#999999" HorizontalAlignment="Right"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

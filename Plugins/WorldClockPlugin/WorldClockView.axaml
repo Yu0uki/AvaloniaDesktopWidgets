@@ -1,0 +1,131 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:WorldClockPlugin.ViewModels"
+             x:DataType="viewModels:WorldClockViewModel"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="WorldClockPlugin.WorldClockView">
+
+  <UserControl.DataContext>
+    <viewModels:WorldClockViewModel />
+  </UserControl.DataContext>
+
+  <Design.DataContext>
+    <viewModels:WorldClockViewModel />
+  </Design.DataContext>
+
+  <Grid Margin="20">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+
+    <!-- 标题和时区选择 -->
+    <StackPanel Grid.Row="0" Spacing="15" Margin="0,0,0,20">
+      <TextBlock Text="🌍 世界时钟" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
+      
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+        <TextBlock Text="时区:" VerticalAlignment="Center" FontSize="14"/>
+        <ComboBox ItemsSource="{Binding TimeZones}" 
+                  SelectedItem="{Binding SelectedTimeZone}"
+                  Width="200" Height="35"/>
+      </StackPanel>
+    </StackPanel>
+
+    <!-- 主内容区域 - 使用TabControl切换功能 -->
+    <TabControl Grid.Row="1" SelectedIndex="{Binding ActiveTab}">
+      <!-- 时钟标签页 -->
+      <TabItem Header="⏰ 时钟">
+        <ScrollViewer>
+          <StackPanel Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <!-- 当前时间显示 -->
+            <Border Background="#F5F5F5" CornerRadius="10" Padding="30" HorizontalAlignment="Center">
+              <StackPanel Spacing="10" HorizontalAlignment="Center">
+                <TextBlock Text="{Binding CurrentTime, StringFormat={}{0:yyyy-MM-dd}}" 
+                           FontSize="18" HorizontalAlignment="Center" Foreground="#666666"/>
+                <TextBlock Text="{Binding CurrentTime, StringFormat={}{0:HH:mm:ss}}" 
+                           FontSize="48" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#333333"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="5">
+                  <TextBlock Text="📍" FontSize="16"/>
+                  <TextBlock Text="{Binding CurrentCity}" FontSize="14" Foreground="#666666"/>
+                  <TextBlock Text="|" FontSize="14" Foreground="#999999"/>
+                  <TextBlock Text="{Binding CurrentCountry}" FontSize="14" Foreground="#666666"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <!-- 时间格式设置提示 -->
+            <Border Background="#E3F2FD" CornerRadius="8" Padding="15" HorizontalAlignment="Center">
+              <StackPanel Spacing="5">
+                <TextBlock Text="💡 提示" FontWeight="Bold" Foreground="#1976D2"/>
+                <TextBlock Text="可以在设置中自定义时间格式" FontSize="12" Foreground="#555555"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <!-- 秒表标签页 -->
+      <TabItem Header="⏱️ 秒表">
+        <ScrollViewer>
+          <StackPanel Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border Background="#FFF3E0" CornerRadius="10" Padding="40" HorizontalAlignment="Center">
+              <StackPanel Spacing="15" HorizontalAlignment="Center">
+                <TextBlock Text="秒表" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#E65100"/>
+                <TextBlock Text="{Binding StopwatchTime, StringFormat={}{0:hh\\:mm\\:ss\\.ff}}" 
+                           FontSize="42" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#333333"/>
+              </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15">
+              <Button Content="▶ 开始" Command="{Binding StartStopwatchCommand}" 
+                      IsEnabled="{Binding !IsStopwatchRunning}"
+                      Classes="accent" Width="100" Height="40"/>
+              <Button Content="⏸ 停止" Command="{Binding StopStopwatchCommand}" 
+                      IsEnabled="{Binding IsStopwatchRunning}"
+                      Width="100" Height="40"/>
+              <Button Content="🔄 重置" Command="{Binding ResetStopwatchCommand}" 
+                      Width="100" Height="40"/>
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <!-- 计时器标签页 -->
+      <TabItem Header="⏲️ 计时器">
+        <ScrollViewer>
+          <StackPanel Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border Background="#E8F5E9" CornerRadius="10" Padding="40" HorizontalAlignment="Center">
+              <StackPanel Spacing="15" HorizontalAlignment="Center">
+                <TextBlock Text="倒计时" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#2E7D32"/>
+                
+                <!-- 设置计时时长 -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                  <TextBlock Text="设置时长:" VerticalAlignment="Center"/>
+                  <TextBox Text="{Binding TimerDuration.TotalMinutes}" Width="80" Height="35"
+                           Watermark="分钟"/>
+                  <TextBlock Text="分钟" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <TextBlock Text="{Binding TimerTime, StringFormat={}{0:hh\\:mm\\:ss}}" 
+                           FontSize="42" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#333333"/>
+              </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15">
+              <Button Content="▶ 开始" Command="{Binding StartTimerCommand}" 
+                      IsEnabled="{Binding !IsTimerRunning}"
+                      Classes="accent" Width="100" Height="40"/>
+              <Button Content="⏸ 停止" Command="{Binding StopTimerCommand}" 
+                      IsEnabled="{Binding IsTimerRunning}"
+                      Width="100" Height="40"/>
+              <Button Content="🔄 重置" Command="{Binding ResetTimerCommand}" 
+                      Width="100" Height="40"/>
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+    </TabControl>
+  </Grid>
+</UserControl>

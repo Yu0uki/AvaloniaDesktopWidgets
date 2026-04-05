@@ -1,4 +1,6 @@
 using AvaloniaApplication2.Models;
+using AvaloniaApplication2.Infrastructure;
+using Serilog;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.IO;
@@ -13,15 +15,19 @@ namespace AvaloniaApplication2.Services
     {
         private readonly string _settingsFilePath;
         private AppSettings _settings;
+        private readonly ILogger _logger;
 
         public AppSettings Settings => _settings;
 
         public SettingsService()
         {
+            _logger = LoggingConfig.Logger.ForContext<SettingsService>();
+            
             var dataDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
             if (!Directory.Exists(dataDirectory))
             {
                 Directory.CreateDirectory(dataDirectory);
+                _logger.Information("创建设置目录: {Path}", dataDirectory);
             }
 
             _settingsFilePath = Path.Combine(dataDirectory, "settings.json");
@@ -39,15 +45,17 @@ namespace AvaloniaApplication2.Services
                 {
                     var json = File.ReadAllText(_settingsFilePath);
                     var settings = JsonSerializer.Deserialize<AppSettings>(json);
+                    _logger.Information("设置已加载: {Path}", _settingsFilePath);
                     return settings ?? new AppSettings();
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"加载设置失败: {ex.Message}");
+                    _logger.Error(ex, "加载设置失败: {Path}", _settingsFilePath);
                     return new AppSettings();
                 }
             }
 
+            _logger.Information("设置文件不存在，使用默认设置");
             return new AppSettings();
         }
 
@@ -67,11 +75,11 @@ namespace AvaloniaApplication2.Services
                 var json = JsonSerializer.Serialize(_settings, options);
                 await File.WriteAllTextAsync(_settingsFilePath, json);
                 
-                Console.WriteLine("设置已保存");
+                _logger.Debug("设置已保存: {Path}", _settingsFilePath);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"保存设置失败: {ex.Message}");
+                _logger.Error(ex, "保存设置失败: {Path}", _settingsFilePath);
                 throw;
             }
         }

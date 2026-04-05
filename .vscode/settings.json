@@ -1,3 +1,11 @@
 {
-    "git.autofetch": false
+    "files.associations": {
+        "*.axaml": "xml"
+    },
+    "editor.quickSuggestions": {
+        "strings": true
+    },
+    "dotnet.defaultSolution": "AvaloniaApplication2.slnx",
+    "omnisharp.useModernNet": true,
+    "csharp.suppressDotnetInstallWarning": false
 }
