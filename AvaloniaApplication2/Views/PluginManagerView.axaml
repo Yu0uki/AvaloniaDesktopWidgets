@@ -4,7 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="AvaloniaApplication2.Views.PluginManagerView"
-             xmlns:converters="clr-namespace:Avalonia.Data.Converters;assembly=Avalonia.Base">
+             xmlns:avaloniaConverters="clr-namespace:Avalonia.Data.Converters;assembly=Avalonia.Base"
+             xmlns:converters="using:AvaloniaApplication2.Converters">
     
     <Grid>
         <!-- 拖拽覆盖层 -->
@@ -76,7 +77,7 @@
                                             <!-- 错误信息 -->
                                             <TextBlock Text="{Binding Error}" FontSize="12" 
                                                        Foreground="#D13438" TextWrapping="Wrap"
-                                                       IsVisible="{Binding Error, Converter={x:Static converters:StringConverters.IsNotNullOrEmpty}}"/>
+                                                       IsVisible="{Binding Error, Converter={x:Static avaloniaConverters:StringConverters.IsNotNullOrEmpty}}"/>
                                         </StackPanel>
 
                                         <!-- 操作按钮 -->
@@ -100,13 +101,15 @@
                                                     CommandParameter="{Binding Id}"
                                                     IsEnabled="{Binding IsEnabled}"/>
 
-                                            <!-- 停止运行 -->
-                                            <Button Content="停止" Height="32" Padding="15,0"
-                                                    Background="#FF9800" Foreground="White"
+                                            <!-- 停止/启动按钮 -->
+                                            <Button Height="32" Padding="15,0"
                                                     CornerRadius="4" FontSize="12"
                                                     Command="{Binding $parent[ItemsControl].DataContext.StopPluginCommand}"
                                                     CommandParameter="{Binding Id}"
-                                                    IsEnabled="{Binding IsEnabled}"/>
+                                                    IsEnabled="{Binding IsEnabled}"
+                                                    Content="{Binding IsRunning, Converter={StaticResource BoolToStringConverter}, ConverterParameter='停止|启动'}"
+                                                    Background="{Binding IsRunning, Converter={StaticResource BoolToBrushConverter}, ConverterParameter='#FF9800|#4CAF50'}"
+                                                    Foreground="White"/>
 
                                             <!-- 卸载 -->
                                             <Button Content="卸载" Height="32" Padding="15,0"

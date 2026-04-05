@@ -51,6 +51,12 @@ namespace AvaloniaApplication2.Core
         private bool isEnabled = true;
 
         /// <summary>
+        /// 是否正在运行
+        /// </summary>
+        [ObservableProperty]
+        private bool isRunning = false;
+
+        /// <summary>
         /// 是否已加载到内存
         /// </summary>
         [ObservableProperty]

@@ -54,16 +54,33 @@ namespace AvaloniaApplication2.ViewModels
         /// 停用插件（停止运行）
         /// </summary>
         [RelayCommand]
-        private async Task StopPluginAsync(string pluginId)
+        private void StopPlugin(string pluginId)
         {
             try
             {
-                await _pluginManager.DisablePluginAsync(pluginId);
+                _pluginManager.StopPlugin(pluginId);
                 StatusMessage = $"插件已停止运行";
             }
             catch (Exception ex)
             {
                 StatusMessage = $"停止失败: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// 启动插件运行
+        /// </summary>
+        [RelayCommand]
+        private void StartPlugin(string pluginId)
+        {
+            try
+            {
+                _pluginManager.StartPlugin(pluginId);
+                StatusMessage = $"插件已启动运行";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"启动失败: {ex.Message}";
             }
         }
 
@@ -90,24 +107,58 @@ namespace AvaloniaApplication2.ViewModels
         [RelayCommand]
         private void OpenPlugin(string pluginId)
         {
-            var plugin = _pluginManager.GetPlugin(pluginId);
-            if (plugin != null)
+            try
             {
-                _pluginManager.ActivatePlugin(pluginId);
-                
-                // 获取插件主视图并切换到该视图
-                var mainView = plugin.GetMainView();
-                if (mainView != null)
+                var plugin = _pluginManager.GetPlugin(pluginId);
+                if (plugin != null)
                 {
-                    // 通知主窗口显示插件视图
-                    var mainWindowVM = DependencyInjection.ServiceContainer.GetService<MainWindowViewModel>();
-                    if (mainWindowVM != null)
+                    // 启动插件运行
+                    _pluginManager.StartPlugin(pluginId);
+                    _pluginManager.ActivatePlugin(pluginId);
+                    
+                    // 获取插件主视图
+                    var mainView = plugin.GetMainView();
+                    if (mainView != null)
                     {
-                        mainWindowVM.ShowPluginView(plugin.Name, mainView);
+                        // 创建插件包装器视图模型
+                        var mainWindowVM = DependencyInjection.ServiceContainer.GetService<MainWindowViewModel>();
+                        if (mainWindowVM != null)
+                        {
+                            var wrapperVM = new ViewModels.PluginWrapperViewModel(
+                                pluginId, 
+                                plugin.Name, 
+                                mainView, 
+                                mainWindowVM
+                            );
+                            
+                            // 创建包装器视图
+                            var wrapperView = new Views.PluginWrapperView
+                            {
+                                DataContext = wrapperVM
+                            };
+                            
+                            // 显示插件视图
+                            mainWindowVM.ShowPluginView(pluginId, plugin.Name, wrapperView);
+                            StatusMessage = $"已打开插件: {plugin.Name}";
+                        }
+                        else
+                        {
+                            StatusMessage = "错误: 无法获取主窗口引用";
+                        }
+                    }
+                    else
+                    {
+                        StatusMessage = $"错误: 插件 {plugin.Name} 没有提供主视图";
                     }
                 }
-                
-                StatusMessage = $"已打开插件: {plugin.Name}";
+                else
+                {
+                    StatusMessage = $"错误: 找不到插件 {pluginId}";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"打开插件失败: {ex.Message}";
             }
         }
 

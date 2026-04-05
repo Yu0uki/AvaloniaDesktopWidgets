@@ -1,0 +1,18 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:AvaloniaApplication2.ViewModels"
+        x:DataType="vm:PluginWindowViewModel"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="AvaloniaApplication2.Views.PluginWindow"
+        Title="{Binding PluginName}"
+        Width="800" Height="600"
+        MinWidth="400" MinHeight="300"
+        Background="{DynamicResource WindowBackgroundBrush}">
+
+    <Grid>
+        <!-- 插件内容 -->
+        <ContentControl Content="{Binding PluginContent}"/>
+    </Grid>
+</Window>

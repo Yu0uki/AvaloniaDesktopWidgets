@@ -11,7 +11,7 @@ namespace AvaloniaApplication2.Services
     {
         private readonly AssemblyDependencyResolver _resolver;
 
-        public PluginLoadContext(string pluginPath)
+        public PluginLoadContext(string pluginPath) : base(isCollectible: true)
         {
             _resolver = new AssemblyDependencyResolver(pluginPath);
         }

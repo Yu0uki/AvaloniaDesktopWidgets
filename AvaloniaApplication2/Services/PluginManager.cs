@@ -15,6 +15,16 @@ using System.IO;
 namespace AvaloniaApplication2.Services
 {
     /// <summary>
+    /// 插件状态改变类型
+    /// </summary>
+    public enum PluginStateChange
+    {
+        Started,    // 插件启动
+        Stopped,    // 插件停止
+        Unloaded    // 插件卸载
+    }
+
+    /// <summary>
     /// 插件管理器 - 负责加载、卸载和管理插件生命周期
     /// </summary>
     public class PluginManager
@@ -29,22 +39,58 @@ namespace AvaloniaApplication2.Services
 
         public ObservableCollection<PluginInfo> PluginInfos => _pluginInfos;
 
+        // 插件状态改变事件
+        public event Action<string, PluginStateChange>? PluginStateChanged;
+
         public PluginManager(SettingsService settingsService, NotificationService? notificationService = null)
         {
             _settingsService = settingsService;
             _notificationService = notificationService ?? NotificationService.Instance;
             _logger = LoggingConfig.Logger.ForContext<PluginManager>();
-            _pluginsDirectory = Path.GetFullPath(_settingsService.Settings.PluginsDirectory);
+            
+            // 解析插件目录路径
+            var pluginsDir = _settingsService.Settings.PluginsDirectory;
+            _pluginsDirectory = Path.GetFullPath(pluginsDir);
+            
+            // 如果配置的目录不存在，尝试从项目根目录查找
+            if (!Directory.Exists(_pluginsDirectory))
+            {
+                // 尝试向上查找包含 Plugins 文件夹的目录
+                var currentDir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
+                while (currentDir != null)
+                {
+                    var potentialPluginsDir = Path.Combine(currentDir.FullName, "Plugins");
+                    if (Directory.Exists(potentialPluginsDir))
+                    {
+                        _pluginsDirectory = potentialPluginsDir;
+                        _logger.Information("找到项目根目录的插件文件夹: {Path}", _pluginsDirectory);
+                        break;
+                    }
+                    currentDir = currentDir.Parent;
+                }
+            }
+            
+            _logger.Information("配置的插件目录: {ConfigPath}", pluginsDir);
+            _logger.Information("实际使用的插件目录: {FullPath}", _pluginsDirectory);
             
             // 确保插件目录存在
             if (!Directory.Exists(_pluginsDirectory))
             {
-                Directory.CreateDirectory(_pluginsDirectory);
-                _logger.Information("创建插件目录: {Path}", _pluginsDirectory);
+                try
+                {
+                    Directory.CreateDirectory(_pluginsDirectory);
+                    _logger.Information("创建插件目录: {Path}", _pluginsDirectory);
+                    _notificationService.ShowSuccess($"已创建插件目录: {_pluginsDirectory}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "创建插件目录失败: {Path}", _pluginsDirectory);
+                    _notificationService.ShowError($"创建插件目录失败: {ex.Message}");
+                }
             }
             else
             {
-                _logger.Information("插件目录: {Path}", _pluginsDirectory);
+                _logger.Information("插件目录已存在: {Path}", _pluginsDirectory);
             }
         }
 
@@ -123,6 +169,7 @@ namespace AvaloniaApplication2.Services
                     Author = plugin.Author,
                     DllPath = dllPath,
                     IsEnabled = true,
+                    IsRunning = true,
                     IsLoaded = true,
                     InstalledDate = DateTime.Now
                 };
@@ -202,6 +249,9 @@ namespace AvaloniaApplication2.Services
                         context.Unload();
                         _pluginContexts.Remove(pluginId);
                     }
+                    
+                    // 触发状态改变事件
+                    PluginStateChanged?.Invoke(pluginId, PluginStateChange.Unloaded);
 
                     _logger.Information("插件已卸载: {PluginId}", pluginId);
                     _notificationService.ShowInfo($"插件已卸载: {pluginId}");
@@ -246,6 +296,7 @@ namespace AvaloniaApplication2.Services
             if (pluginInfo != null)
             {
                 pluginInfo.IsEnabled = false;
+                pluginInfo.IsRunning = false;
                 
                 _settingsService.Settings.EnabledPlugins.Remove(pluginId);
                 await _settingsService.SaveSettingsAsync();
@@ -255,6 +306,54 @@ namespace AvaloniaApplication2.Services
                 {
                     plugin.Deactivate();
                 }
+            }
+        }
+
+        /// <summary>
+        /// 停止插件运行（但保持安装状态）
+        /// </summary>
+        public void StopPlugin(string pluginId)
+        {
+            var pluginInfo = _pluginInfos.FirstOrDefault(p => p.Id == pluginId);
+            if (pluginInfo != null)
+            {
+                pluginInfo.IsRunning = false;
+                
+                // 停用插件但不从内存中移除
+                if (_loadedPlugins.TryGetValue(pluginId, out var plugin))
+                {
+                    plugin.Deactivate();
+                }
+                
+                // 触发状态改变事件
+                PluginStateChanged?.Invoke(pluginId, PluginStateChange.Stopped);
+                
+                _logger.Information("插件已停止运行: {PluginId}", pluginId);
+                _notificationService.ShowInfo($"插件已停止: {pluginInfo.Name}");
+            }
+        }
+
+        /// <summary>
+        /// 启动插件运行
+        /// </summary>
+        public void StartPlugin(string pluginId)
+        {
+            var pluginInfo = _pluginInfos.FirstOrDefault(p => p.Id == pluginId);
+            if (pluginInfo != null && pluginInfo.IsEnabled)
+            {
+                pluginInfo.IsRunning = true;
+                
+                // 激活插件
+                if (_loadedPlugins.TryGetValue(pluginId, out var plugin))
+                {
+                    plugin.Activate();
+                }
+                
+                // 触发状态改变事件
+                PluginStateChanged?.Invoke(pluginId, PluginStateChange.Started);
+                
+                _logger.Information("插件已启动运行: {PluginId}", pluginId);
+                _notificationService.ShowSuccess($"插件已启动: {pluginInfo.Name}");
             }
         }
 

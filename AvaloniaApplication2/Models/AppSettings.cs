@@ -18,7 +18,7 @@ namespace AvaloniaApplication2.Models
         public bool AutoLoadPlugins { get; set; } = true;
 
         /// <summary>
-        /// 插件目录路径
+        /// 插件目录路径（相对于应用程序运行目录）
         /// </summary>
         public string PluginsDirectory { get; set; } = "./Plugins";
 
