@@ -1,6 +1,10 @@
-﻿using AvaloniaApplication2.Services;
+﻿using Avalonia.Controls;
+using AvaloniaApplication2.DependencyInjection;
+using AvaloniaApplication2.Infrastructure;
+using AvaloniaApplication2.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Serilog;
 using System.Collections.ObjectModel;
 
 namespace AvaloniaApplication2.ViewModels
@@ -10,6 +14,7 @@ namespace AvaloniaApplication2.ViewModels
         private readonly PluginManager _pluginManager;
         private readonly SettingsService _settingsService;
         private readonly NotificationService _notificationService;
+        private readonly ILogger _logger;
 
         [ObservableProperty]
         private object? currentPage;
@@ -26,6 +31,12 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty]
         private string statusMessage = "";
 
+        [ObservableProperty]
+        private bool isShowingPluginView = false;
+
+        [ObservableProperty]
+        private string currentPluginName = "";
+
         // 通知集合
         public ObservableCollection<NotificationMessage> Notifications => _notificationService.Notifications;
 
@@ -34,9 +45,12 @@ namespace AvaloniaApplication2.ViewModels
             _pluginManager = pluginManager;
             _settingsService = settingsService;
             _notificationService = NotificationService.Instance;
+            _logger = LoggingConfig.Logger.ForContext<MainWindowViewModel>();
 
             // 默认显示仪表盘
             CurrentPage = new DashboardViewModel(_pluginManager);
+            
+            _logger.Information("MainWindowViewModel 已初始化");
         }
 
         /// <summary>
@@ -85,6 +99,33 @@ namespace AvaloniaApplication2.ViewModels
         private void ToggleMaximize()
         {
             IsMaximized = !IsMaximized;
+        }
+
+        /// <summary>
+        /// 显示插件视图
+        /// </summary>
+        public void ShowPluginView(string pluginName, Control pluginView)
+        {
+            _logger.Information("显示插件视图: {PluginName}, 控件类型: {ControlType}", 
+                pluginName, pluginView.GetType().FullName);
+            StatusMessage = $"正在运行: {pluginName}";
+            CurrentPluginName = pluginName;
+            IsShowingPluginView = true;
+            CurrentPage = pluginView;
+            _logger.Information("CurrentPage 已设置为: {PageType}", CurrentPage?.GetType().FullName);
+        }
+
+        /// <summary>
+        /// 返回仪表盘
+        /// </summary>
+        [RelayCommand]
+        private void NavigateBackToDashboard()
+        {
+            _logger.Information("返回仪表盘");
+            IsShowingPluginView = false;
+            CurrentPluginName = "";
+            StatusMessage = "";
+            NavigateToDashboard();
         }
 
         /// <summary>

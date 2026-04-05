@@ -19,6 +19,10 @@ namespace AvaloniaApplication2
             if (param is null)
                 return null;
 
+            // 如果已经是Control类型，直接返回
+            if (param is Control control)
+                return control;
+
             var name = param.GetType().FullName!.Replace("ViewModel", "View", StringComparison.Ordinal);
             var type = Type.GetType(name);
 

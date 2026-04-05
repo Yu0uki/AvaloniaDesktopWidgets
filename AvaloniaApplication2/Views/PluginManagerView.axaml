@@ -100,6 +100,14 @@
                                                     CommandParameter="{Binding Id}"
                                                     IsEnabled="{Binding IsEnabled}"/>
 
+                                            <!-- 停止运行 -->
+                                            <Button Content="停止" Height="32" Padding="15,0"
+                                                    Background="#FF9800" Foreground="White"
+                                                    CornerRadius="4" FontSize="12"
+                                                    Command="{Binding $parent[ItemsControl].DataContext.StopPluginCommand}"
+                                                    CommandParameter="{Binding Id}"
+                                                    IsEnabled="{Binding IsEnabled}"/>
+
                                             <!-- 卸载 -->
                                             <Button Content="卸载" Height="32" Padding="15,0"
                                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="#D13438"

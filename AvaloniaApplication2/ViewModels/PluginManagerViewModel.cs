@@ -51,6 +51,23 @@ namespace AvaloniaApplication2.ViewModels
         }
 
         /// <summary>
+        /// 停用插件（停止运行）
+        /// </summary>
+        [RelayCommand]
+        private async Task StopPluginAsync(string pluginId)
+        {
+            try
+            {
+                await _pluginManager.DisablePluginAsync(pluginId);
+                StatusMessage = $"插件已停止运行";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"停止失败: {ex.Message}";
+            }
+        }
+
+        /// <summary>
         /// 卸载插件
         /// </summary>
         [RelayCommand]
@@ -77,6 +94,19 @@ namespace AvaloniaApplication2.ViewModels
             if (plugin != null)
             {
                 _pluginManager.ActivatePlugin(pluginId);
+                
+                // 获取插件主视图并切换到该视图
+                var mainView = plugin.GetMainView();
+                if (mainView != null)
+                {
+                    // 通知主窗口显示插件视图
+                    var mainWindowVM = DependencyInjection.ServiceContainer.GetService<MainWindowViewModel>();
+                    if (mainWindowVM != null)
+                    {
+                        mainWindowVM.ShowPluginView(plugin.Name, mainView);
+                    }
+                }
+                
                 StatusMessage = $"已打开插件: {plugin.Name}";
             }
         }

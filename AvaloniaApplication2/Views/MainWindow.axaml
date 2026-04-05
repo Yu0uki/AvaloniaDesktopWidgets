@@ -78,19 +78,30 @@
                 <StackPanel VerticalAlignment="Top">
                     <!-- 仪表盘 -->
                     <Button Classes="nav-button" Command="{Binding NavigateToDashboardCommand}" 
-                            ToolTip.Tip="仪表盘">
+                            ToolTip.Tip="仪表盘"
+                            IsVisible="{Binding !IsShowingPluginView}">
                         <TextBlock Text="🏠" FontSize="20" HorizontalAlignment="Center"/>
+                    </Button>
+
+                    <!-- 返回按钮（仅在显示插件视图时显示） -->
+                    <Button Classes="nav-button" Command="{Binding NavigateBackToDashboardCommand}" 
+                            ToolTip.Tip="返回主页"
+                            IsVisible="{Binding IsShowingPluginView}"
+                            Background="#E3F2FD">
+                        <TextBlock Text="←" FontSize="20" HorizontalAlignment="Center" Foreground="#0078D4"/>
                     </Button>
 
                     <!-- 插件管理 -->
                     <Button Classes="nav-button" Command="{Binding NavigateToPluginManagerCommand}"
-                            ToolTip.Tip="插件管理">
+                            ToolTip.Tip="插件管理"
+                            IsVisible="{Binding !IsShowingPluginView}">
                         <TextBlock Text="📦" FontSize="20" HorizontalAlignment="Center"/>
                     </Button>
 
                     <!-- 设置 -->
                     <Button Classes="nav-button" Command="{Binding NavigateToSettingsCommand}"
-                            ToolTip.Tip="设置">
+                            ToolTip.Tip="设置"
+                            IsVisible="{Binding !IsShowingPluginView}">
                         <TextBlock Text="⚙️" FontSize="20" HorizontalAlignment="Center"/>
                     </Button>
                 </StackPanel>

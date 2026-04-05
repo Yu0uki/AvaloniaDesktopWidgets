@@ -23,7 +23,9 @@ namespace AvaloniaApplication2.Services
             {
                 return LoadFromAssemblyPath(assemblyPath);
             }
-            return null;
+            
+            // 如果插件目录中找不到，尝试从主应用程序目录加载
+            return Default.LoadFromAssemblyName(assemblyName);
         }
 
         protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)

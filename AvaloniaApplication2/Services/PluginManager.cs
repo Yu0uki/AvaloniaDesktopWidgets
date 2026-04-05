@@ -1,5 +1,7 @@
 using AvaloniaApplication2.Core;
 using AvaloniaApplication2.Models;
+using AvaloniaApplication2.Infrastructure;
+using Serilog;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Text.Json;
@@ -23,6 +25,7 @@ namespace AvaloniaApplication2.Services
         private readonly ObservableCollection<PluginInfo> _pluginInfos = new();
         private readonly SettingsService _settingsService;
         private readonly NotificationService _notificationService;
+        private readonly ILogger _logger;
 
         public ObservableCollection<PluginInfo> PluginInfos => _pluginInfos;
 
@@ -30,12 +33,18 @@ namespace AvaloniaApplication2.Services
         {
             _settingsService = settingsService;
             _notificationService = notificationService ?? NotificationService.Instance;
+            _logger = LoggingConfig.Logger.ForContext<PluginManager>();
             _pluginsDirectory = Path.GetFullPath(_settingsService.Settings.PluginsDirectory);
             
             // 确保插件目录存在
             if (!Directory.Exists(_pluginsDirectory))
             {
                 Directory.CreateDirectory(_pluginsDirectory);
+                _logger.Information("创建插件目录: {Path}", _pluginsDirectory);
+            }
+            else
+            {
+                _logger.Information("插件目录: {Path}", _pluginsDirectory);
             }
         }
 
@@ -45,9 +54,13 @@ namespace AvaloniaApplication2.Services
         public async Task LoadPluginsAsync()
         {
             if (!_settingsService.Settings.AutoLoadPlugins)
+            {
+                _logger.Information("自动加载插件已禁用");
                 return;
+            }
 
             var dllFiles = Directory.GetFiles(_pluginsDirectory, "*.dll", SearchOption.TopDirectoryOnly);
+            _logger.Information("发现 {Count} 个 DLL 文件", dllFiles.Length);
             
             foreach (var dllFile in dllFiles)
             {
@@ -57,7 +70,7 @@ namespace AvaloniaApplication2.Services
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"加载插件失败 {dllFile}: {ex.Message}");
+                    _logger.Error(ex, "加载插件失败: {DllPath}", dllFile);
                 }
             }
         }
@@ -68,10 +81,15 @@ namespace AvaloniaApplication2.Services
         public async Task<IPlugin?> LoadPluginAsync(string dllPath)
         {
             if (!File.Exists(dllPath))
+            {
+                _logger.Warning("插件文件不存在: {Path}", dllPath);
                 throw new FileNotFoundException("插件文件不存在", dllPath);
+            }
 
             try
             {
+                _logger.Information("开始加载插件: {Path}", dllPath);
+                
                 // 创建隔离的加载上下文
                 var context = new PluginLoadContext(dllPath);
                 var assembly = context.LoadFromAssemblyPath(Path.GetFullPath(dllPath));
@@ -118,8 +136,16 @@ namespace AvaloniaApplication2.Services
                     await _settingsService.SaveSettingsAsync();
                 }
 
-                Console.WriteLine($"插件加载成功: {plugin.Name} v{plugin.Version}");
+                _logger.Information("插件加载成功: {Name} v{Version}", plugin.Name, plugin.Version);
                 _notificationService.ShowSuccess($"插件加载成功: {plugin.Name} v{plugin.Version}");
+                
+                // 启动热重载监视（如果启用）
+                var hotReloadManager = DependencyInjection.ServiceContainer.GetService<PluginHotReloadManager>();
+                if (hotReloadManager != null)
+                {
+                    hotReloadManager.StartWatching(plugin.Id, dllPath);
+                }
+                
                 return plugin;
             }
             catch (Exception ex)
@@ -135,7 +161,7 @@ namespace AvaloniaApplication2.Services
                 };
                 _pluginInfos.Add(errorInfo);
                 
-                Console.WriteLine($"加载插件失败: {ex.Message}");
+                _logger.Error(ex, "加载插件失败: {Path}", dllPath);
                 _notificationService.ShowError($"加载插件失败: {ex.Message}");
                 return null;
             }
@@ -150,6 +176,15 @@ namespace AvaloniaApplication2.Services
             {
                 try
                 {
+                    _logger.Information("开始卸载插件: {PluginId}", pluginId);
+                    
+                    // 停止热重载监视
+                    var hotReloadManager = DependencyInjection.ServiceContainer.GetService<PluginHotReloadManager>();
+                    if (hotReloadManager != null)
+                    {
+                        hotReloadManager.StopWatching(pluginId);
+                    }
+                    
                     plugin.Shutdown();
                     
                     // 从集合中移除
@@ -168,12 +203,12 @@ namespace AvaloniaApplication2.Services
                         _pluginContexts.Remove(pluginId);
                     }
 
-                    Console.WriteLine($"插件已卸载: {pluginId}");
+                    _logger.Information("插件已卸载: {PluginId}", pluginId);
                     _notificationService.ShowInfo($"插件已卸载: {pluginId}");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"卸载插件失败: {ex.Message}");
+                    _logger.Error(ex, "卸载插件失败: {PluginId}", pluginId);
                 }
             }
         }
@@ -279,12 +314,12 @@ namespace AvaloniaApplication2.Services
                     _settingsService.Settings.EnabledPlugins.Remove(pluginId);
                     await _settingsService.SaveSettingsAsync();
                     
-                    Console.WriteLine($"插件已删除: {pluginId}");
+                    _logger.Information("插件已删除: {PluginId}", pluginId);
                     _notificationService.ShowSuccess($"插件已删除: {pluginId}");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"删除插件文件失败: {ex.Message}");
+                    _logger.Error(ex, "删除插件文件失败: {PluginId}", pluginId);
                     throw;
                 }
             }

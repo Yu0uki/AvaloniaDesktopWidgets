@@ -3,8 +3,10 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using AvaloniaApplication2.DependencyInjection;
 using AvaloniaApplication2.Services;
 using AvaloniaApplication2.ViewModels;
+using Serilog;
 using System.Linq;
 
 namespace AvaloniaApplication2
@@ -23,16 +25,18 @@ namespace AvaloniaApplication2
                 // 禁用重复的数据验证
                 DisableAvaloniaDataAnnotationValidation();
 
-                // 初始化服务
-                var settingsService = new SettingsService();
-                var notificationService = NotificationService.Instance;
-                var pluginManager = new PluginManager(settingsService, notificationService);
+                // 初始化依赖注入容器
+                ServiceContainer.ConfigureServices();
+
+                // 从容器获取服务
+                var settingsService = ServiceContainer.GetRequiredService<SettingsService>();
+                var pluginManager = ServiceContainer.GetRequiredService<PluginManager>();
 
                 // 应用保存的主题设置
                 ApplySavedTheme(settingsService.Settings.Theme);
 
-                // 创建主窗口 ViewModel
-                var mainWindowViewModel = new MainWindowViewModel(pluginManager, settingsService);
+                // 创建主窗口 ViewModel（从容器获取）
+                var mainWindowViewModel = ServiceContainer.GetRequiredService<MainWindowViewModel>();
 
                 // 创建主窗口
                 var mainWindow = new MainWindow
@@ -42,11 +46,30 @@ namespace AvaloniaApplication2
 
                 desktop.MainWindow = mainWindow;
 
+                // 注册退出事件
+                desktop.Exit += OnApplicationExit;
+
                 // 异步加载插件
                 _ = pluginManager.LoadPluginsAsync();
+
+                Log.Information("应用程序启动完成");
             }
 
             base.OnFrameworkInitializationCompleted();
+        }
+
+        /// <summary>
+        /// 应用程序退出处理
+        /// </summary>
+        private void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+        {
+            Log.Information("应用程序正在退出...");
+            
+            // 停止所有插件热重载监视
+            var hotReloadManager = ServiceContainer.GetService<PluginHotReloadManager>();
+            hotReloadManager?.StopAllWatching();
+            
+            ServiceContainer.Shutdown();
         }
 
         /// <summary>
