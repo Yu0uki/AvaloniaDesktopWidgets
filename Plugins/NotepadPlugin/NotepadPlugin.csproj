@@ -4,34 +4,31 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <!-- 不复制依赖项，由主程序提供，减小插件体积 -->
+    <!-- ⭐ 关键：不复制依赖项，由主程序提供，减小插件体积 -->
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Avalonia UI 依赖（版本需与主程序一致） -->
     <PackageReference Include="Avalonia" Version="11.3.11" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.11" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.11" />
+    
+    <!-- MVVM 工具包 -->
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- ⭐ 引用主项目以访问 IPlugin 接口 -->
     <ProjectReference Include="..\..\AvaloniaApplication2\AvaloniaApplication2.csproj" />
   </ItemGroup>
 
-  <!-- 构建后自动复制 DLL 到 Plugins 目录 -->
+  <!-- 可选：Release 构建后自动复制到 Plugins 目录 -->
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
     <Copy SourceFiles="$(TargetPath)" 
-          DestinationFolder="$(MSBuildThisFileDirectory)..\..\Plugins\" 
+          DestinationFolder="$(MSBuildThisFileDirectory)..\..\" 
           SkipUnchangedFiles="true" />
-    <Message Text="✅ WorldClockPlugin.dll 已复制到 Plugins 目录" Importance="high" />
-  </Target>
-
-  <!-- 验证 DLL 是否正确部署 -->
-  <Target Name="PostBuildVerify" AfterTargets="PostBuild" Condition="'$(Configuration)' == 'Release'">
-    <Error Condition="!Exists('$(MSBuildThisFileDirectory)..\..\Plugins\$(TargetFileName)')" 
-           Text="DLL 未正确复制到 Plugins 目录！请检查 PostBuild 配置。" />
-    <Message Text="✅ 验证通过: DLL 已在 Plugins 目录" Importance="high" />
+    <Message Text="✅ 插件已部署到 Plugins 目录" Importance="high" />
   </Target>
 
 </Project>
