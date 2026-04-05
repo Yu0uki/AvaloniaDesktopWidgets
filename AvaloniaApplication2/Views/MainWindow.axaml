@@ -2,15 +2,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:AvaloniaApplication2.ViewModels"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="750"
         x:Class="AvaloniaApplication2.MainWindow"
         Title="{Binding WindowTitle}"
         Width="1200" Height="750"
         MinWidth="800" MinHeight="500"
         WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource WindowBackgroundBrush}"
-        ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="NoChrome">
+        Background="{DynamicResource WindowBackgroundBrush}">
 
     <Window.Styles>
         <!-- 导航按钮样式 -->
@@ -67,55 +66,8 @@
     </Window.Styles>
 
     <Grid>
-        <!-- 自定义标题栏 -->
-        <Border Height="35" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- 标题和拖拽区域 -->
-                <Border Grid.Column="0" Background="Transparent" PointerPressed="OnTitleBarPointerPressed">
-                    <StackPanel Orientation="Horizontal" Margin="15,0,0,0">
-                        <TextBlock Text="⚡" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock Text="效率工坊" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" FontSize="13" FontWeight="Medium"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- 窗口控制按钮 -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="─" Width="45" Height="35" Click="MinimizeButton_Click" 
-                            Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14">
-                        <Button.Styles>
-                            <Style Selector="Button:pointerover">
-                                <Setter Property="Background" Value="#F0F0F0"/>
-                            </Style>
-                        </Button.Styles>
-                    </Button>
-                    <Button Name="MaximizeButton" Content="☐" Width="45" Height="35" Click="MaximizeButton_Click"
-                            Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12">
-                        <Button.Styles>
-                            <Style Selector="Button:pointerover">
-                                <Setter Property="Background" Value="#F0F0F0"/>
-                            </Style>
-                        </Button.Styles>
-                    </Button>
-                    <Button Content="✕" Width="45" Height="35" Click="CloseButton_Click"
-                            Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12">
-                        <Button.Styles>
-                            <Style Selector="Button:pointerover">
-                                <Setter Property="Background" Value="#E81123"/>
-                                <Setter Property="Foreground" Value="White"/>
-                            </Style>
-                        </Button.Styles>
-                    </Button>
-                </StackPanel>
-            </Grid>
-        </Border>
-
         <!-- 主内容区 -->
-        <Grid Margin="0,35,0,0">
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="60"/>
                 <ColumnDefinition Width="*"/>
@@ -153,9 +105,10 @@
                         Margin="0,50,20,0" Width="350" MaxHeight="400"
                         IsHitTestVisible="False">
                     <ItemsControl ItemsSource="{Binding Notifications}" 
+                                  x:DataType="vm:MainWindowViewModel"
                                   HorizontalAlignment="Right">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="vm:NotificationMessage">
                                 <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="6" 
                                         BoxShadow="0 4 12 0 #33000000"
                                         Margin="0,0,0,10" Padding="15"

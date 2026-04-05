@@ -8,8 +8,9 @@
     
     <Grid>
         <!-- 拖拽覆盖层 -->
-        <Border IsVisible="{Binding IsDragOver}" 
-                Background="#800078D4" ZIndex="999"
+        <Border Name="DragOverlay" 
+                IsVisible="False"
+                Background="#CC0078D4" ZIndex="999"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="15">
                 <TextBlock Text="📦" FontSize="64" Foreground="White"/>
@@ -28,7 +29,8 @@
 
                 <!-- 拖拽区域提示 -->
                 <Border Classes="card" BorderBrush="#0078D4" BorderThickness="2" 
-                        Background="#F0F8FF" Padding="40">
+                        Background="#F0F8FF" Padding="40"
+                        DragDrop.AllowDrop="True">
                     <StackPanel HorizontalAlignment="Center" Spacing="10">
                         <TextBlock Text="📥" FontSize="48" HorizontalAlignment="Center"/>
                         <TextBlock Text="拖拽 DLL 文件到此处" FontSize="16" Foreground="#0078D4" 
