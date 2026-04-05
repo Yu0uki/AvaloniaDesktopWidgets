@@ -127,7 +127,8 @@ namespace AvaloniaApplication2.ViewModels
                             var wrapperVM = new ViewModels.PluginWrapperViewModel(
                                 pluginId, 
                                 plugin.Name, 
-                                mainView, 
+                                mainView,
+                                plugin,  // 传递 IPlugin 实例
                                 mainWindowVM
                             );
                             

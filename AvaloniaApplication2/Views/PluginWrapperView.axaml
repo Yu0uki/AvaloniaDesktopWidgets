@@ -18,6 +18,21 @@
                            Foreground="{DynamicResource TextPrimaryBrush}"/>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" Margin="10,0">
+                    <!-- 插件设置 -->
+                    <Button Content="⚙️" Width="30" Height="30"
+                            Command="{Binding OpenSettingsCommand}"
+                            ToolTip.Tip="插件设置"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Foreground="{DynamicResource TextSecondaryBrush}"
+                            IsVisible="{Binding HasSettingsView}">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#F0F0F0"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    
                     <!-- 弹出为独立窗口 -->
                     <Button Content="🗗" Width="30" Height="30"
                             Command="{Binding OpenAsWindowCommand}"
@@ -51,6 +66,6 @@
         </Border>
         
         <!-- 插件内容 -->
-        <ContentControl Content="{Binding PluginContent}"/>
+        <ContentPresenter Content="{Binding PluginContent}"/>
     </DockPanel>
 </UserControl>

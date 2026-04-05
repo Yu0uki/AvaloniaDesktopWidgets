@@ -165,16 +165,7 @@ namespace AvaloniaApplication2.ViewModels
             IsShowingPluginView = true;
             CurrentPage = pluginView;
             
-            // 将插件添加到运行列表（如果不存在）
-            var existingPlugin = RunningPlugins.FirstOrDefault(p => p.Id == pluginId);
-            if (existingPlugin == null)
-            {
-                var pluginInfo = _pluginManager.PluginInfos.FirstOrDefault(p => p.Id == pluginId);
-                if (pluginInfo != null)
-                {
-                    RunningPlugins.Add(pluginInfo);
-                }
-            }
+            // 注意：RunningPlugins的添加由OnPluginStateChanged事件处理，避免重复添加
             
             _logger.Information("CurrentPage 已设置为: {PageType}", CurrentPage?.GetType().FullName);
         }
@@ -196,7 +187,23 @@ namespace AvaloniaApplication2.ViewModels
                     var mainView = plugin.GetMainView();
                     if (mainView != null)
                     {
-                        ShowPluginView(pluginId, plugin.Name, mainView);
+                        // 创建插件包装器视图模型
+                        var wrapperVM = new PluginWrapperViewModel(
+                            pluginId,
+                            plugin.Name,
+                            mainView,
+                            plugin,  // 传递 IPlugin 实例
+                            this
+                        );
+                        
+                        // 创建包装器视图
+                        var wrapperView = new Views.PluginWrapperView
+                        {
+                            DataContext = wrapperVM
+                        };
+                        
+                        // 显示插件视图（使用包装器）
+                        ShowPluginView(pluginId, plugin.Name, wrapperView);
                     }
                 }
             }
@@ -269,6 +276,45 @@ namespace AvaloniaApplication2.ViewModels
             {
                 _logger.Error(ex, "打开独立窗口失败: {PluginId}", pluginId);
                 _notificationService.ShowError($"打开独立窗口失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 显示插件设置视图
+        /// </summary>
+        public void ShowPluginSettingsView(string pluginId, string pluginName, Control settingsView)
+        {
+            try
+            {
+                _logger.Information("显示插件设置: {PluginName}", pluginName);
+                
+                // 创建包装器视图模型（使用设置视图）
+                var wrapperVM = new PluginWrapperViewModel(
+                    pluginId,
+                    $"{pluginName} - 设置",
+                    settingsView,
+                    null,  // 设置视图不需要 IPlugin 实例
+                    this
+                );
+                
+                // 创建包装器视图
+                var wrapperView = new Views.PluginWrapperView
+                {
+                    DataContext = wrapperVM
+                };
+                
+                // 显示设置视图
+                IsShowingPluginView = true;
+                CurrentPluginName = $"{pluginName} - 设置";
+                SelectedPluginId = pluginId;
+                CurrentPage = wrapperView;
+                
+                StatusMessage = $"正在配置: {pluginName}";
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "显示插件设置失败: {PluginId}", pluginId);
+                _notificationService.ShowError($"打开设置失败: {ex.Message}");
             }
         }
 
