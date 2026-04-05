@@ -1,0 +1,102 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:NotepadPlugin.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="NotepadPlugin.MainView"
+             x:DataType="vm:MainViewModel">
+
+  <Design.DataContext>
+    <vm:MainViewModel/>
+  </Design.DataContext>
+
+  <Grid RowDefinitions="Auto,*,Auto">
+    <!-- 工具栏 -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="10">
+      <Button Content="新建" Command="{Binding NewNoteCommand}" Width="80"/>
+      <Button Content="保存" Command="{Binding SaveNoteCommand}" Width="80" 
+              IsEnabled="{Binding !IsSaving}"/>
+      <Button Content="删除" Command="{Binding DeleteNoteCommand}" Width="80"/>
+      <Button Content="重命名" Command="{Binding RenameNoteCommand}" Width="80"/>
+      
+      <Separator Width="1" Margin="5,0"/>
+      
+      <!-- 字体选择 -->
+      <TextBlock Text="字体:" VerticalAlignment="Center" Margin="5,0,0,0"/>
+      <ComboBox ItemsSource="{Binding AvailableFonts}" 
+                SelectedItem="{Binding FontFamily}"
+                Width="120"
+                HorizontalAlignment="Left"/>
+      
+      <TextBlock Text="字号:" VerticalAlignment="Center" Margin="10,0,0,0"/>
+      <ComboBox ItemsSource="{Binding AvailableFontSizes}" 
+                SelectedItem="{Binding FontSize}"
+                Width="80"
+                HorizontalAlignment="Left"/>
+    </StackPanel>
+
+    <!-- 主内容区域 -->
+    <Grid Grid.Row="1" ColumnDefinitions="200,*" Margin="10,0,10,10">
+      <!-- 左侧笔记列表 -->
+      <Border Grid.Column="0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+              BorderThickness="1" Margin="0,0,10,0">
+        <Grid RowDefinitions="Auto,*">
+          <TextBlock Grid.Row="0" Text="笔记列表" FontWeight="Bold" 
+                     Margin="10" FontSize="14"/>
+          
+          <ListBox Grid.Row="1" 
+                   ItemsSource="{Binding NoteFiles}"
+                   SelectedItem="{Binding SelectedNoteFile}"
+                   Margin="5">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding}" Margin="5"/>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
+      </Border>
+
+      <!-- 右侧编辑器 -->
+      <Border Grid.Column="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+              BorderThickness="1">
+        <Grid RowDefinitions="Auto,*">
+          <!-- 当前笔记名称 -->
+          <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10">
+            <TextBlock Text="当前笔记:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <TextBlock Text="{Binding CurrentNoteName}" FontWeight="Bold" 
+                       VerticalAlignment="Center"/>
+          </StackPanel>
+
+          <!-- 文本编辑器 -->
+          <TextBox Grid.Row="1" 
+                   Text="{Binding NoteContent}"
+                   AcceptsReturn="True"
+                   AcceptsTab="True"
+                   TextWrapping="Wrap"
+                   FontSize="{Binding FontSize}"
+                   FontFamily="{Binding FontFamily}"
+                   Margin="10"/>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- 状态栏 -->
+    <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" 
+            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+            BorderThickness="0,1,0,0">
+      <Grid ColumnDefinitions="*,Auto" Margin="10,5">
+        <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" 
+                   VerticalAlignment="Center"/>
+        
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+          <TextBlock Text="{Binding FontFamily}" VerticalAlignment="Center" FontSize="12"/>
+          <TextBlock Text="|" VerticalAlignment="Center" FontSize="12"/>
+          <TextBlock Text="{Binding FontSize, StringFormat={}{0:F0}pt}" 
+                     VerticalAlignment="Center" FontSize="12"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

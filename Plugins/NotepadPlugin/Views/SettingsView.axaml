@@ -1,0 +1,108 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:NotepadPlugin.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
+             x:Class="NotepadPlugin.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+  <Design.DataContext>
+    <vm:SettingsViewModel/>
+  </Design.DataContext>
+
+  <ScrollViewer>
+    <StackPanel Margin="20" Spacing="15">
+      <!-- 标题 -->
+      <TextBlock Text="记事本设置" FontSize="20" FontWeight="Bold" Margin="0,0,0,10"/>
+
+      <!-- 笔记文件夹设置 -->
+      <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+              BorderThickness="1" Padding="15" CornerRadius="5">
+        <StackPanel Spacing="10">
+          <TextBlock Text="笔记存储位置" FontWeight="Bold" FontSize="14"/>
+          
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBox Grid.Column="0" 
+                     Text="{Binding NotesFolderPath}"
+                     Watermark="笔记文件夹路径"
+                     Margin="0,0,10,0"/>
+            <Button Grid.Column="1" 
+                    Content="浏览..." 
+                    Command="{Binding SelectNotesFolderCommand}"
+                    Width="80"/>
+          </Grid>
+          
+          <TextBlock Text="所有笔记文件将保存在此文件夹中" 
+                     FontSize="12" 
+                     Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+        </StackPanel>
+      </Border>
+
+      <!-- 默认字体设置 -->
+      <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+              BorderThickness="1" Padding="15" CornerRadius="5">
+        <StackPanel Spacing="10">
+          <TextBlock Text="默认字体设置" FontWeight="Bold" FontSize="14"/>
+          
+          <Grid ColumnDefinitions="Auto,*,Auto,*">
+            <TextBlock Grid.Column="0" Text="字体:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <ComboBox Grid.Column="1" 
+                      ItemsSource="{Binding AvailableFonts}"
+                      SelectedItem="{Binding DefaultFontFamily}"
+                      Margin="0,0,20,0"/>
+            
+            <TextBlock Grid.Column="2" Text="字号:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <ComboBox Grid.Column="3" 
+                      ItemsSource="{Binding AvailableFontSizes}"
+                      SelectedItem="{Binding DefaultFontSize}"
+                      Width="100"/>
+          </Grid>
+          
+          <TextBlock Text="新建笔记时使用的默认字体和字号" 
+                     FontSize="12" 
+                     Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+        </StackPanel>
+      </Border>
+
+      <!-- 自动保存设置 -->
+      <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+              BorderThickness="1" Padding="15" CornerRadius="5">
+        <StackPanel Spacing="10">
+          <TextBlock Text="自动保存" FontWeight="Bold" FontSize="14"/>
+          
+          <CheckBox Content="启用自动保存" IsChecked="{Binding AutoSave}"/>
+          
+          <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding AutoSave}">
+            <TextBlock Grid.Column="0" Text="保存间隔(分钟):" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <NumericUpDown Grid.Column="1" 
+                          Value="{Binding AutoSaveInterval}"
+                          Minimum="1"
+                          Maximum="60"
+                          Width="100"
+                          HorizontalAlignment="Left"/>
+          </Grid>
+          
+          <TextBlock Text="定期自动保存当前编辑的笔记" 
+                     FontSize="12" 
+                     Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+        </StackPanel>
+      </Border>
+
+      <!-- 操作按钮 -->
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,10,0,0">
+        <Button Content="重置为默认" Command="{Binding ResetSettingsCommand}" Width="100"/>
+        <Button Content="保存设置" Command="{Binding SaveSettingsCommand}" Width="100"/>
+      </StackPanel>
+
+      <!-- 状态信息 -->
+      <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" 
+              BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+              BorderThickness="1" Padding="10" CornerRadius="3">
+        <TextBlock Text="{Binding StatusMessage}" 
+                   FontSize="12" 
+                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
