@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:PluginTemplate.ViewModels"
+             x:DataType="viewModels:MainViewModel"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="PluginTemplate.MainView">
+
+  <UserControl.DataContext>
+    <viewModels:MainViewModel />
+  </UserControl.DataContext>
+
+  <Design.DataContext>
+    <viewModels:MainViewModel />
+  </Design.DataContext>
+
+  <Grid Margin="20">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+
+    <!-- 标题 -->
+    <TextBlock Grid.Row="0" 
+               Text="🎯 插件模板" 
+               FontSize="24" 
+               FontWeight="Bold"
+               HorizontalAlignment="Center"
+               Margin="0,0,0,20"/>
+
+    <!-- 主内容区 -->
+    <StackPanel Grid.Row="1" Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+      
+      <!-- 消息显示 -->
+      <Border Background="#F5F5F5" CornerRadius="10" Padding="20" MinWidth="300">
+        <StackPanel Spacing="10">
+          <TextBlock Text="{Binding Message}" 
+                     FontSize="16"
+                     HorizontalAlignment="Center"
+                     TextWrapping="Wrap"/>
+          
+          <TextBlock Text="{Binding Counter, StringFormat='计数：{0}'}" 
+                     FontSize="14"
+                     Foreground="#666666"
+                     HorizontalAlignment="Center"/>
+        </StackPanel>
+      </Border>
+
+      <!-- 错误提示 -->
+      <Border Background="#FFEBEE" 
+              CornerRadius="8" 
+              Padding="15"
+              IsVisible="{Binding HasError}">
+        <StackPanel Spacing="5">
+          <TextBlock Text="❌ 错误" FontWeight="Bold" Foreground="#C62828"/>
+          <TextBlock Text="{Binding ErrorMessage}" 
+                     Foreground="#C62828"
+                     TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <!-- 加载指示器 -->
+      <StackPanel IsVisible="{Binding IsLoading}" Spacing="10">
+        <ProgressBar IsIndeterminate="True" Width="200"/>
+        <TextBlock Text="处理中..." 
+                   HorizontalAlignment="Center"
+                   Foreground="#666666"/>
+      </StackPanel>
+
+      <!-- 操作按钮 -->
+      <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center">
+        <Button Content="▶ 执行操作" 
+                Command="{Binding DoWorkAsyncCommand}"
+                IsEnabled="{Binding !IsLoading}"
+                Classes="accent"
+                Width="120"
+                Height="40"/>
+        
+        <Button Content="🔄 重置" 
+                Command="{Binding ResetCommand}"
+                Width="100"
+                Height="40"/>
+      </StackPanel>
+
+      <!-- 提示信息 -->
+      <Border Background="#E3F2FD" CornerRadius="8" Padding="15" MaxWidth="400">
+        <StackPanel Spacing="5">
+          <TextBlock Text="💡 提示" FontWeight="Bold" Foreground="#1976D2"/>
+          <TextBlock Text="这是一个插件模板，您可以基于此快速创建新插件。" 
+                     FontSize="12" 
+                     Foreground="#555555"
+                     TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </Grid>
+</UserControl>

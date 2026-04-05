@@ -1,0 +1,83 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:PluginTemplate.ViewModels"
+             x:DataType="viewModels:SettingsViewModel"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             x:Class="PluginTemplate.SettingsView">
+
+  <UserControl.DataContext>
+    <viewModels:SettingsViewModel />
+  </UserControl.DataContext>
+
+  <Design.DataContext>
+    <viewModels:SettingsViewModel />
+  </Design.DataContext>
+
+  <ScrollViewer Padding="20">
+    <StackPanel Spacing="20" MaxWidth="500">
+      
+      <!-- 标题 -->
+      <TextBlock Text="⚙️ 插件设置" FontSize="20" FontWeight="Bold"/>
+
+      <!-- 基本设置 -->
+      <Border Background="#F5F5F5" CornerRadius="8" Padding="15">
+        <StackPanel Spacing="10">
+          <TextBlock Text="📋 基本设置" FontWeight="Bold" FontSize="16"/>
+          
+          <StackPanel Spacing="5">
+            <TextBlock Text="设置项 1:" FontSize="13" Foreground="#666666"/>
+            <TextBox Text="{Binding Setting1}" 
+                     Watermark="请输入..."
+                     Height="35"/>
+          </StackPanel>
+
+          <CheckBox Content="启用功能" 
+                    IsChecked="{Binding EnableFeature}"/>
+
+          <StackPanel Spacing="5">
+            <TextBlock Text="最大数量:" FontSize="13" Foreground="#666666"/>
+            <NumericUpDown Value="{Binding MaxItems}" 
+                          Minimum="1"
+                          Maximum="1000"
+                          Height="35"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- 外观设置 -->
+      <Border Background="#E3F2FD" CornerRadius="8" Padding="15">
+        <StackPanel Spacing="10">
+          <TextBlock Text="🎨 外观设置" FontWeight="Bold" FontSize="16"/>
+          
+          <StackPanel Spacing="5">
+            <TextBlock Text="主题:" FontSize="13" Foreground="#666666"/>
+            <ComboBox ItemsSource="{Binding ThemeOptions}"
+                      SelectedItem="{Binding SelectedTheme}"
+                      Height="35"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- 操作按钮 -->
+      <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+        <Button Content="🔄 重置默认" 
+                Command="{Binding ResetToDefaultsCommand}"
+                Width="100"
+                Height="40"/>
+        
+        <Button Content="💾 保存设置" 
+                Command="{Binding SaveSettingsCommand}"
+                Classes="accent"
+                Width="120"
+                Height="40"/>
+      </StackPanel>
+
+      <TextBlock Text="💡 提示: 某些设置需要重启后生效" 
+                 FontSize="11" 
+                 Foreground="#999999" 
+                 HorizontalAlignment="Right"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
