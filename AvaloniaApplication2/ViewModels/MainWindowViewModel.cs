@@ -325,10 +325,16 @@ namespace AvaloniaApplication2.ViewModels
         private void NavigateBackToDashboard()
         {
             _logger.Information("返回仪表盘");
+            
+            // ⭐ 关键修复：先清除 CurrentPage，让 Avalonia 从 Visual Tree 中移除插件视图
+            CurrentPage = null;
+            
             IsShowingPluginView = false;
             CurrentPluginName = "";
             SelectedPluginId = null;
             StatusMessage = "";
+            
+            // 然后设置新的页面
             NavigateToDashboard();
         }
 

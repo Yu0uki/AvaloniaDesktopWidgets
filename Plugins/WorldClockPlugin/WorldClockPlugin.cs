@@ -15,9 +15,6 @@ namespace WorldClockPlugin
         public string Description => "显示当前系统时间，支持时区切换、秒表和计时器功能";
         public string Author => "AvaloniaApplication2 Team";
 
-        private WorldClockView? _mainView;
-        private SettingsView? _settingsView;
-
         public void Initialize()
         {
             // 初始化插件
@@ -25,11 +22,7 @@ namespace WorldClockPlugin
 
         public void Activate()
         {
-            // 激活插件时创建视图
-            if (_mainView == null)
-            {
-                _mainView = new WorldClockView();
-            }
+            // 激活插件时的处理
         }
 
         public void Deactivate()
@@ -40,26 +33,18 @@ namespace WorldClockPlugin
         public void Shutdown()
         {
             // 关闭插件时的清理工作
-            _mainView?.Dispose();
-            _settingsView?.Dispose();
         }
 
         public Control GetMainView()
         {
-            if (_mainView == null)
-            {
-                _mainView = new WorldClockView();
-            }
-            return _mainView;
+            // ⭐ 关键修复：每次都创建新实例，避免 Visual Tree 冲突
+            return new WorldClockView();
         }
 
         public Control? GetSettingsView()
         {
-            if (_settingsView == null)
-            {
-                _settingsView = new SettingsView();
-            }
-            return _settingsView;
+            // ⭐ 关键修复：每次都创建新实例，避免 Visual Tree 冲突
+            return new SettingsView();
         }
 
         public Stream? GetIcon()
