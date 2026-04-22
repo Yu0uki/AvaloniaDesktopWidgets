@@ -26,7 +26,7 @@
         <FluentTheme />
     </Application.Styles>
     
-    <!-- 全局深色主题样式 -->
+    <!-- 全局浅色主题样式（默认） -->
     <Application.Resources>
         <ResourceDictionary>
             <!-- 注册转换器 -->
@@ -38,26 +38,59 @@
                 <ResourceDictionary x:Key="Dark">
                     <Color x:Key="WindowBackgroundColor">#1E1E1E</Color>
                     <Color x:Key="CardBackgroundColor">#2D2D2D</Color>
+                    <Color x:Key="TopBarBackgroundColor">#2D2D2D</Color>
+                    <Color x:Key="SidebarBackgroundColor">#252526</Color>
+                    <Color x:Key="SearchBoxBackgroundColor">#383838</Color>
+                    <Color x:Key="SearchBoxFocusBackgroundColor">#404040</Color>
+                    <Color x:Key="ShortcutKeyBackgroundColor">#383838</Color>
+                    <Color x:Key="NavHoverColor">#383838</Color>
+                    <Color x:Key="NavActiveColor">#37373D</Color>
+                    <Color x:Key="WindowControlHoverColor">#383838</Color>
                     <Color x:Key="TextPrimaryColor">#FFFFFF</Color>
                     <Color x:Key="TextSecondaryColor">#B0B0B0</Color>
                     <Color x:Key="BorderColor">#3F3F3F</Color>
                     <Color x:Key="AccentColor">#4FC3F7</Color>
                     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{DynamicResource WindowBackgroundColor}"/>
                     <SolidColorBrush x:Key="CardBackgroundBrush" Color="{DynamicResource CardBackgroundColor}"/>
+                    <SolidColorBrush x:Key="TopBarBackgroundBrush" Color="{DynamicResource TopBarBackgroundColor}"/>
+                    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{DynamicResource SidebarBackgroundColor}"/>
+                    <SolidColorBrush x:Key="SearchBoxBackgroundBrush" Color="{DynamicResource SearchBoxBackgroundColor}"/>
+                    <SolidColorBrush x:Key="SearchBoxFocusBackgroundBrush" Color="{DynamicResource SearchBoxFocusBackgroundColor}"/>
+                    <SolidColorBrush x:Key="ShortcutKeyBackgroundBrush" Color="{DynamicResource ShortcutKeyBackgroundColor}"/>
+                    <SolidColorBrush x:Key="NavHoverBrush" Color="{DynamicResource NavHoverColor}"/>
+                    <SolidColorBrush x:Key="NavActiveBrush" Color="{DynamicResource NavActiveColor}"/>
+                    <SolidColorBrush x:Key="WindowControlHoverBrush" Color="{DynamicResource WindowControlHoverColor}"/>
                     <SolidColorBrush x:Key="TextPrimaryBrush" Color="{DynamicResource TextPrimaryColor}"/>
                     <SolidColorBrush x:Key="TextSecondaryBrush" Color="{DynamicResource TextSecondaryColor}"/>
                     <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderColor}"/>
                     <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource AccentColor}"/>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Light">
-                    <Color x:Key="WindowBackgroundColor">#FAFAFA</Color>
+                    <!-- Windows 11 浅色主题 -->
+                    <Color x:Key="WindowBackgroundColor">#F3F3F3</Color>
                     <Color x:Key="CardBackgroundColor">#FFFFFF</Color>
-                    <Color x:Key="TextPrimaryColor">#333333</Color>
-                    <Color x:Key="TextSecondaryColor">#666666</Color>
+                    <Color x:Key="TopBarBackgroundColor">#F8F8F8</Color>
+                    <Color x:Key="SidebarBackgroundColor">#F3F3F3</Color>
+                    <Color x:Key="SearchBoxBackgroundColor">#FFFFFF</Color>
+                    <Color x:Key="SearchBoxFocusBackgroundColor">#FFFFFF</Color>
+                    <Color x:Key="ShortcutKeyBackgroundColor">#F0F0F0</Color>
+                    <Color x:Key="NavHoverColor">#F0F0F0</Color>
+                    <Color x:Key="NavActiveColor">#E3F2FD</Color>
+                    <Color x:Key="WindowControlHoverColor">#F0F0F0</Color>
+                    <Color x:Key="TextPrimaryColor">#1A1A1A</Color>
+                    <Color x:Key="TextSecondaryColor">#5E5E5E</Color>
                     <Color x:Key="BorderColor">#E0E0E0</Color>
-                    <Color x:Key="AccentColor">#0078D4</Color>
+                    <Color x:Key="AccentColor">#0067C0</Color>
                     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{DynamicResource WindowBackgroundColor}"/>
                     <SolidColorBrush x:Key="CardBackgroundBrush" Color="{DynamicResource CardBackgroundColor}"/>
+                    <SolidColorBrush x:Key="TopBarBackgroundBrush" Color="{DynamicResource TopBarBackgroundColor}"/>
+                    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{DynamicResource SidebarBackgroundColor}"/>
+                    <SolidColorBrush x:Key="SearchBoxBackgroundBrush" Color="{DynamicResource SearchBoxBackgroundColor}"/>
+                    <SolidColorBrush x:Key="SearchBoxFocusBackgroundBrush" Color="{DynamicResource SearchBoxFocusBackgroundColor}"/>
+                    <SolidColorBrush x:Key="ShortcutKeyBackgroundBrush" Color="{DynamicResource ShortcutKeyBackgroundColor}"/>
+                    <SolidColorBrush x:Key="NavHoverBrush" Color="{DynamicResource NavHoverColor}"/>
+                    <SolidColorBrush x:Key="NavActiveBrush" Color="{DynamicResource NavActiveColor}"/>
+                    <SolidColorBrush x:Key="WindowControlHoverBrush" Color="{DynamicResource WindowControlHoverColor}"/>
                     <SolidColorBrush x:Key="TextPrimaryBrush" Color="{DynamicResource TextPrimaryColor}"/>
                     <SolidColorBrush x:Key="TextSecondaryBrush" Color="{DynamicResource TextSecondaryColor}"/>
                     <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderColor}"/>

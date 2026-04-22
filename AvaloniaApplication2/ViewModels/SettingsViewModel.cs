@@ -16,7 +16,7 @@ namespace AvaloniaApplication2.ViewModels
         private readonly SettingsService _settingsService;
 
         [ObservableProperty]
-        private int selectedThemeIndex = 0; // 0=Dark, 1=Light, 2=System
+        private int selectedThemeIndex = 1; // 0=Dark, 1=Light, 2=System
 
         [ObservableProperty]
         private bool autoLoadPlugins;
@@ -39,7 +39,7 @@ namespace AvaloniaApplication2.ViewModels
             {
                 "light" => 1,
                 "system" => 2,
-                _ => 0 // dark
+                _ => 1 // light (默认浅色)
             };
             AutoLoadPlugins = settingsService.Settings.AutoLoadPlugins;
             PluginsDirectory = settingsService.Settings.PluginsDirectory;

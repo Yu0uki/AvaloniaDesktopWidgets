@@ -10,7 +10,7 @@ namespace AvaloniaApplication2.Models
         /// <summary>
         /// 主题设置：Light, Dark, System
         /// </summary>
-        public string Theme { get; set; } = "Dark";
+        public string Theme { get; set; } = "Light";
 
         /// <summary>
         /// 启动时自动加载插件

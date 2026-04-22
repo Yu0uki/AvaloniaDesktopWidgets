@@ -44,11 +44,22 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty]
         private string? selectedPluginId;
 
+        [ObservableProperty]
+        private bool isSidebarExpanded = false;
+
+        [ObservableProperty]
+        private string sidebarWidth = "64";
+
+        [ObservableProperty]
+        private string searchQuery = "";
+
         // 已启动的插件列表（用于导航栏显示）
         public ObservableCollection<PluginInfo> RunningPlugins { get; }
 
         // 通知集合
         public ObservableCollection<NotificationMessage> Notifications => _notificationService.Notifications;
+
+        public event EventHandler? FocusSearchRequested;
 
         public MainWindowViewModel(PluginManager pluginManager, SettingsService settingsService)
         {
@@ -345,6 +356,27 @@ namespace AvaloniaApplication2.ViewModels
         private void CloseWindow()
         {
             // 由视图处理
+        }
+
+        /// <summary>
+        /// 聚焦搜索框
+        /// </summary>
+        [RelayCommand]
+        private void FocusSearch()
+        {
+            _logger.Information("聚焦搜索框 (Ctrl+K)");
+            // 搜索框的焦点由视图处理
+        }
+
+        /// <summary>
+        /// 切换侧边栏展开/折叠状态
+        /// </summary>
+        [RelayCommand]
+        private void ToggleSidebar()
+        {
+            IsSidebarExpanded = !IsSidebarExpanded;
+            SidebarWidth = IsSidebarExpanded ? "220" : "64";
+            _logger.Information("侧边栏{State}", IsSidebarExpanded ? "展开" : "折叠");
         }
     }
 }

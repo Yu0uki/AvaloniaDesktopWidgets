@@ -82,7 +82,7 @@ namespace AvaloniaApplication2
                 "light" => Avalonia.Styling.ThemeVariant.Light,
                 "dark" => Avalonia.Styling.ThemeVariant.Dark,
                 "system" => Avalonia.Styling.ThemeVariant.Default,
-                _ => Avalonia.Styling.ThemeVariant.Dark // 默认深色主题
+                _ => Avalonia.Styling.ThemeVariant.Light // 默认浅色主题
             };
 
             RequestedThemeVariant = themeVariant;

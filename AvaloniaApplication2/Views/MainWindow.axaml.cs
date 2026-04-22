@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using AvaloniaApplication2.ViewModels;
 using System;
 using System.Linq;
@@ -11,6 +13,7 @@ namespace AvaloniaApplication2
     {
         private MainWindowViewModel? _viewModel;
         private bool _isDragOver;
+        private TextBox? _searchBox;
 
         public MainWindow()
         {
@@ -20,12 +23,35 @@ namespace AvaloniaApplication2
             this.AddHandler(DragDrop.DragEnterEvent, OnDragEnter);
             this.AddHandler(DragDrop.DragLeaveEvent, OnDragLeave);
             this.AddHandler(DragDrop.DropEvent, OnDrop);
+            
+            // 监听 DataContext 变化
+            this.DataContextChanged += OnDataContextChanged;
         }
 
-        protected override void OnDataContextChanged(EventArgs e)
+        private void OnDataContextChanged(object? sender, EventArgs e)
         {
-            base.OnDataContextChanged(e);
             _viewModel = DataContext as MainWindowViewModel;
+            
+            // 查找搜索框并绑定快捷键
+            if (_searchBox == null)
+            {
+                // 延迟查找搜索框
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _searchBox = this.FindDescendantOfType<TextBox>();
+                    
+                    if (_viewModel != null)
+                    {
+                        _viewModel.FocusSearchRequested += OnFocusSearchRequested;
+                    }
+                }, DispatcherPriority.Loaded);
+            }
+        }
+        
+        private void OnFocusSearchRequested(object? sender, EventArgs e)
+        {
+            _searchBox?.Focus();
+            _searchBox?.SelectAll();
         }
 
         #region 拖拽处理
