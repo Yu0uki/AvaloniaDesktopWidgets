@@ -26,17 +26,7 @@ namespace AvaloniaApplication2.Views
             
             if (DataContext is PluginManagerViewModel vm)
             {
-                // 监听插件集合变化
-                vm.Plugins.CollectionChanged += (s, args) => UpdateEmptyState();
-                UpdateEmptyState();
-            }
-        }
-
-        private void UpdateEmptyState()
-        {
-            if (DataContext is PluginManagerViewModel vm)
-            {
-                EmptyStateBorder.IsVisible = vm.Plugins.Count == 0;
+                // SukiUI 使用绑定控制空状态显示，无需手动更新
             }
         }
 

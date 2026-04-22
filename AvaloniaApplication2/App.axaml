@@ -23,47 +23,54 @@
     </Application.DataTemplates>
   
     <Application.Styles>
+        <!-- SukiUI 主题 - 暂时注释，待确认正确用法 -->
+        <!-- <suki:SukiTheme ThemeColor="Blue" /> -->
+        
+        <!-- 临时使用 Fluent 主题 + SukiUI 样式增强 -->
         <FluentTheme />
+        
+        <!-- Card 样式 - 模拟 SukiCard 效果 -->
+        <Style Selector="Border.Card">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        
+        <Style Selector="Button.NavigationButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        
+        <Style Selector="Button.NavigationButton:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}"/>
+        </Style>
+        
+        <Style Selector="Button.NavigationButton:pressed">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListMediumBrush}"/>
+        </Style>
+        
+        <Style Selector="Button.Danger">
+            <Setter Property="Background" Value="#D13438"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        
+        <Style Selector="Button.Danger:pointerover">
+            <Setter Property="Background" Value="#C50F1F"/>
+        </Style>
     </Application.Styles>
     
-    <!-- 全局深色主题样式 -->
+    <!-- SukiUI 全局资源 -->
     <Application.Resources>
         <ResourceDictionary>
             <!-- 注册转换器 -->
             <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
             <converters:BoolToBrushConverter x:Key="BoolToBrushConverter"/>
             <converters:IntToBoolConverter x:Key="IntToBoolConverter"/>
-            
-            <ResourceDictionary.ThemeDictionaries>
-                <ResourceDictionary x:Key="Dark">
-                    <Color x:Key="WindowBackgroundColor">#1E1E1E</Color>
-                    <Color x:Key="CardBackgroundColor">#2D2D2D</Color>
-                    <Color x:Key="TextPrimaryColor">#FFFFFF</Color>
-                    <Color x:Key="TextSecondaryColor">#B0B0B0</Color>
-                    <Color x:Key="BorderColor">#3F3F3F</Color>
-                    <Color x:Key="AccentColor">#4FC3F7</Color>
-                    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{DynamicResource WindowBackgroundColor}"/>
-                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{DynamicResource CardBackgroundColor}"/>
-                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{DynamicResource TextPrimaryColor}"/>
-                    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{DynamicResource TextSecondaryColor}"/>
-                    <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderColor}"/>
-                    <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource AccentColor}"/>
-                </ResourceDictionary>
-                <ResourceDictionary x:Key="Light">
-                    <Color x:Key="WindowBackgroundColor">#FAFAFA</Color>
-                    <Color x:Key="CardBackgroundColor">#FFFFFF</Color>
-                    <Color x:Key="TextPrimaryColor">#333333</Color>
-                    <Color x:Key="TextSecondaryColor">#666666</Color>
-                    <Color x:Key="BorderColor">#E0E0E0</Color>
-                    <Color x:Key="AccentColor">#0078D4</Color>
-                    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{DynamicResource WindowBackgroundColor}"/>
-                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{DynamicResource CardBackgroundColor}"/>
-                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{DynamicResource TextPrimaryColor}"/>
-                    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{DynamicResource TextSecondaryColor}"/>
-                    <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderColor}"/>
-                    <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource AccentColor}"/>
-                </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

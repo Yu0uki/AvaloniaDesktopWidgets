@@ -5,180 +5,94 @@
         xmlns:vm="using:AvaloniaApplication2.ViewModels"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="750"
         x:Class="AvaloniaApplication2.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
         Title="{Binding WindowTitle}"
         Width="1200" Height="750"
         MinWidth="800" MinHeight="500"
-        WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource WindowBackgroundBrush}">
-
-    <Window.Styles>
-        <!-- 导航按钮样式 -->
-        <Style Selector="Button.nav-button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
-            <Setter Property="Width" Value="60"/>
-            <Setter Property="Height" Value="60"/>
-            <Setter Property="Margin" Value="0,5"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
-                </Transitions>
-            </Setter>
-        </Style>
-        
-        <Style Selector="Button.nav-button:pointerover">
-            <Setter Property="Background" Value="#F0F0F0"/>
-        </Style>
-        
-        <Style Selector="Button.nav-button:selected">
-            <Setter Property="Background" Value="#E3F2FD"/>
-            <Setter Property="Foreground" Value="#0078D4"/>
-        </Style>
-
-        <!-- 卡片样式 -->
-        <Style Selector="Border.card">
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="BoxShadow" Value="0 2 8 0 #1A000000"/>
-            <Setter Property="Padding" Value="20"/>
-            <Setter Property="Margin" Value="10"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.2"/>
-                </Transitions>
-            </Setter>
-        </Style>
-        
-        <Style Selector="Border.card:pointerover">
-            <Setter Property="BoxShadow" Value="0 4 12 0 #33000000"/>
-        </Style>
-
-        <!-- 按钮通用样式 -->
-        <Style Selector="Button">
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
-                </Transitions>
-            </Setter>
-        </Style>
-    </Window.Styles>
+        WindowStartupLocation="CenterScreen">
 
     <Grid>
         <!-- 主内容区 -->
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- 左侧导航栏 -->
-            <Border Grid.Column="0" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
-                <Grid RowDefinitions="*,Auto,Auto">
-                    <!-- 上方：系统导航 -->
-                    <StackPanel Grid.Row="0" VerticalAlignment="Top">
+            <!-- 左侧导航栏 - 使用标准 StackPanel + Button -->
+            <Border Grid.Column="0" Width="220" 
+                    Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="0,0,1,0">
+                <DockPanel>
+                    <!-- 导航按钮区域 -->
+                    <StackPanel DockPanel.Dock="Top" VerticalAlignment="Top" Spacing="4" Margin="8">
                         <!-- 仪表盘 -->
-                        <Button Classes="nav-button" Command="{Binding NavigateToDashboardCommand}" 
-                                ToolTip.Tip="仪表盘"
-                                IsVisible="{Binding !IsShowingPluginView}">
-                            <TextBlock Text="🏠" FontSize="20" HorizontalAlignment="Center"/>
-                        </Button>
+                        <Button Content="🏠 仪表盘" 
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                Command="{Binding NavigateToDashboardCommand}" 
+                                IsVisible="{Binding !IsShowingPluginView}"
+                                Classes="NavigationButton"/>
 
                         <!-- 返回按钮（仅在显示插件视图时显示） -->
-                        <Button Classes="nav-button" Command="{Binding NavigateBackToDashboardCommand}" 
-                                ToolTip.Tip="返回主页"
+                        <Button Content="← 返回主页" 
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                Command="{Binding NavigateBackToDashboardCommand}" 
                                 IsVisible="{Binding IsShowingPluginView}"
-                                Background="#E3F2FD">
-                            <TextBlock Text="←" FontSize="20" HorizontalAlignment="Center" Foreground="#0078D4"/>
-                        </Button>
+                                Classes="NavigationButton"/>
 
                         <!-- 插件管理 -->
-                        <Button Classes="nav-button" Command="{Binding NavigateToPluginManagerCommand}"
-                                ToolTip.Tip="插件管理"
-                                IsVisible="{Binding !IsShowingPluginView}">
-                            <TextBlock Text="📦" FontSize="20" HorizontalAlignment="Center"/>
-                        </Button>
+                        <Button Content="📦 插件管理" 
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                Command="{Binding NavigateToPluginManagerCommand}"
+                                IsVisible="{Binding !IsShowingPluginView}"
+                                Classes="NavigationButton"/>
 
                         <!-- 设置 -->
-                        <Button Classes="nav-button" Command="{Binding NavigateToSettingsCommand}"
-                                ToolTip.Tip="设置"
-                                IsVisible="{Binding !IsShowingPluginView}">
-                            <TextBlock Text="⚙️" FontSize="20" HorizontalAlignment="Center"/>
-                        </Button>
+                        <Button Content="⚙️ 设置" 
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                Command="{Binding NavigateToSettingsCommand}"
+                                IsVisible="{Binding !IsShowingPluginView}"
+                                Classes="NavigationButton"/>
                     </StackPanel>
                     
                     <!-- 中间：可拖拽分隔线 -->
-                    <GridSplitter Grid.Row="1" Height="4" 
-                                  Background="{DynamicResource BorderBrush}"
+                    <GridSplitter Height="4" 
                                   HorizontalAlignment="Stretch"
-                                  VerticalAlignment="Center"
+                                  VerticalAlignment="Bottom"
                                   ShowsPreview="True"
-                                  IsVisible="{Binding RunningPlugins.Count, Converter={StaticResource IntToBoolConverter}}">
-                        <GridSplitter.Styles>
-                            <Style Selector="GridSplitter:pointerover">
-                                <Setter Property="Background" Value="#0078D4"/>
-                            </Style>
-                        </GridSplitter.Styles>
-                    </GridSplitter>
+                                  DockPanel.Dock="Bottom"
+                                  IsVisible="{Binding RunningPlugins.Count, Converter={StaticResource IntToBoolConverter}}"/>
                     
                     <!-- 下方：插件列表 -->
-                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" MinHeight="50"
+                    <ScrollViewer DockPanel.Dock="Bottom" VerticalScrollBarVisibility="Auto" MinHeight="50"
                                   IsVisible="{Binding RunningPlugins.Count, Converter={StaticResource IntToBoolConverter}}">
                         <ItemsControl ItemsSource="{Binding RunningPlugins}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Classes="nav-button" 
+                                    <Button Content="{Binding Name, StringFormat='🔌 {0}'}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Left"
                                             Command="{Binding $parent[Window].DataContext.NavigateToPluginCommand}"
                                             CommandParameter="{Binding Id}"
-                                            ToolTip.Tip="{Binding Name}">
-                                        <TextBlock Text="🔌" FontSize="20" HorizontalAlignment="Center"/>
-                                    </Button>
+                                            Classes="NavigationButton"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
-                </Grid>
+                </DockPanel>
             </Border>
 
             <!-- 主内容区域 -->
-            <Grid Grid.Column="1" Background="{DynamicResource WindowBackgroundBrush}">
+            <Grid Grid.Column="1">
                 <ContentControl Content="{Binding CurrentPage}"/>
                 
-                <!-- 通知区域 -->
-                <Border HorizontalAlignment="Right" VerticalAlignment="Top" 
-                        Margin="0,50,20,0" Width="350" MaxHeight="400"
-                        IsHitTestVisible="False">
-                    <ItemsControl ItemsSource="{Binding Notifications}" 
-                                  x:DataType="vm:MainWindowViewModel"
-                                  HorizontalAlignment="Right">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:NotificationMessage">
-                                <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="6" 
-                                        BoxShadow="0 4 12 0 #33000000"
-                                        Margin="0,0,0,10" Padding="15"
-                                        BorderThickness="3,0,0,0"
-                                        BorderBrush="{Binding Color}"
-                                        IsHitTestVisible="True">
-                                    <StackPanel Spacing="8">
-                                        <StackPanel Orientation="Horizontal" Spacing="10">
-                                            <TextBlock Text="{Binding Icon}" FontSize="18"/>
-                                            <TextBlock Text="{Binding Message}" 
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" 
-                                                       FontSize="13"
-                                                       TextWrapping="Wrap"
-                                                       VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding Timestamp, StringFormat='HH:mm:ss'}" 
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" 
-                                                   FontSize="11"
-                                                   HorizontalAlignment="Right"/>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </Border>
+                <!-- Toast 通知区域 - 暂时使用标准 Panel，后续可集成 SukiUI Toast -->
+                <!-- TODO: 集成 SukiUI ToastHost -->
             </Grid>
         </Grid>
     </Grid>

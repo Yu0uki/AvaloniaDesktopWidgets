@@ -7,6 +7,7 @@ using AvaloniaApplication2.DependencyInjection;
 using AvaloniaApplication2.Services;
 using AvaloniaApplication2.ViewModels;
 using Serilog;
+using SukiUI.Controls;
 using System.Linq;
 
 namespace AvaloniaApplication2
