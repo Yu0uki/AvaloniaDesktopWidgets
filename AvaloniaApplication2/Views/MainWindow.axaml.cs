@@ -30,7 +30,25 @@ namespace AvaloniaApplication2
 
         private void OnDataContextChanged(object? sender, EventArgs e)
         {
+            // 取消之前的事件订阅（如果存在）
+            if (_viewModel != null)
+            {
+                _viewModel.WindowMinimizeRequested -= OnWindowMinimizeRequested;
+                _viewModel.WindowMaximizeRequested -= OnWindowMaximizeRequested;
+                _viewModel.WindowCloseRequested -= OnWindowCloseRequested;
+                _viewModel.FocusSearchRequested -= OnFocusSearchRequested;
+            }
+
             _viewModel = DataContext as MainWindowViewModel;
+            
+            if (_viewModel != null)
+            {
+                // 订阅窗口控制事件
+                _viewModel.WindowMinimizeRequested += OnWindowMinimizeRequested;
+                _viewModel.WindowMaximizeRequested += OnWindowMaximizeRequested;
+                _viewModel.WindowCloseRequested += OnWindowCloseRequested;
+                _viewModel.FocusSearchRequested += OnFocusSearchRequested;
+            }
             
             // 查找搜索框并绑定快捷键
             if (_searchBox == null)
@@ -39,19 +57,53 @@ namespace AvaloniaApplication2
                 Dispatcher.UIThread.Post(() =>
                 {
                     _searchBox = this.FindDescendantOfType<TextBox>();
-                    
-                    if (_viewModel != null)
-                    {
-                        _viewModel.FocusSearchRequested += OnFocusSearchRequested;
-                    }
                 }, DispatcherPriority.Loaded);
             }
+        }
+
+        private void OnWindowMinimizeRequested(object? sender, EventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
+
+        private void OnWindowMaximizeRequested(object? sender, ViewModels.WindowStateEventArgs e)
+        {
+            WindowState = e.IsMaximized ? WindowState.Maximized : WindowState.Normal;
+        }
+
+        private void OnWindowCloseRequested(object? sender, EventArgs e)
+        {
+            Close();
         }
         
         private void OnFocusSearchRequested(object? sender, EventArgs e)
         {
             _searchBox?.Focus();
             _searchBox?.SelectAll();
+        }
+
+        /// <summary>
+        /// 顶部栏鼠标按下事件 - 用于拖动窗口
+        /// </summary>
+        private void OnTopBarPointerPressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+        {
+            // 只有在左键点击且没有点击按钮时才拖动
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                // 检查是否点击了按钮或其他交互元素
+                var source = e.Source as Avalonia.Visual;
+                if (source != null)
+                {
+                    // 如果点击的是按钮，不拖动
+                    if (source.FindAncestorOfType<Button>() != null)
+                    {
+                        return;
+                    }
+                }
+                
+                // 开始拖动窗口
+                BeginMoveDrag(e);
+            }
         }
 
         #region 拖拽处理

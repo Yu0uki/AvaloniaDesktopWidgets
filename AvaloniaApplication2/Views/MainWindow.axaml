@@ -107,7 +107,7 @@
     <Grid RowDefinitions="Auto,*">
         
         <!-- 顶部栏 -->
-        <Border Grid.Row="0" Classes="topbar">
+        <Border Grid.Row="0" Classes="topbar" PointerPressed="OnTopBarPointerPressed">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 
                 <!-- 左侧：Logo 和标题 -->
