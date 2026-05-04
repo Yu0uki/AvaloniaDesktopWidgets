@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build *)",
+      "Bash(xxd -l 16 \"f:/Programs/project/AvaloniaApplication2/Plugins/JsonToolboxPlugin/Views/SettingsView.axaml\")",
+      "Bash(dotnet clean *)"
+    ]
+  }
+}

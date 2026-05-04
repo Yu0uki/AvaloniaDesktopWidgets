@@ -1,0 +1,79 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:JsonToolboxPlugin.ViewModels"
+             x:Class="JsonToolboxPlugin.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+  <ScrollViewer Padding="20">
+    <StackPanel Spacing="20" MaxWidth="550">
+      <StackPanel Spacing="4">
+        <TextBlock Text="JSON 工具箱设置" FontSize="20" FontWeight="Bold"/>
+        <TextBlock Text="自定义编辑器行为和输出格式" FontSize="13"
+                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+      </StackPanel>
+
+      <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+              BorderThickness="1" Padding="16" CornerRadius="6">
+        <StackPanel Spacing="14">
+          <TextBlock Text="编辑器" FontWeight="Bold" FontSize="15"/>
+
+          <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="字号:"
+                       VerticalAlignment="Center" FontSize="13"/>
+            <ComboBox Grid.Row="0" Grid.Column="1"
+                      ItemsSource="{Binding FontSizes}"
+                      SelectedItem="{Binding EditorFontSize}"
+                      Width="120" HorizontalAlignment="Left"/>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="自动换行:"
+                       VerticalAlignment="Center" FontSize="13"/>
+            <CheckBox Grid.Row="1" Grid.Column="1"
+                      IsChecked="{Binding WordWrap}"
+                      HorizontalAlignment="Left"/>
+          </Grid>
+
+          <TextBlock FontSize="11"
+                     Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}">
+            自动换行仅在查看长文本时建议启用
+          </TextBlock>
+        </StackPanel>
+      </Border>
+
+      <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+              BorderThickness="1" Padding="16" CornerRadius="6">
+        <StackPanel Spacing="14">
+          <TextBlock Text="输出格式" FontWeight="Bold" FontSize="15"/>
+
+          <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto" RowSpacing="12">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="缩进空格数:"
+                       VerticalAlignment="Center" FontSize="13"/>
+            <ComboBox Grid.Row="0" Grid.Column="1"
+                      ItemsSource="{Binding IndentSizes}"
+                      SelectedItem="{Binding IndentSize}"
+                      Width="120" HorizontalAlignment="Left"/>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="自动验证:"
+                       VerticalAlignment="Center" FontSize="13"/>
+            <CheckBox Grid.Row="1" Grid.Column="1"
+                      IsChecked="{Binding AutoValidate}"
+                      HorizontalAlignment="Left"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+        <Button Content="重置默认" Command="{Binding ResetSettingsCommand}"
+                Width="100" Height="35" FontSize="12"/>
+        <Button Content="保存设置" Command="{Binding SaveSettingsCommand}"
+                Width="100" Height="35" FontSize="12"
+                Background="#0078D4" Foreground="White"/>
+      </StackPanel>
+
+      <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+              BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+              BorderThickness="1" Padding="10" CornerRadius="4">
+        <TextBlock Text="{Binding StatusMessage}"
+                   FontSize="12"/>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
