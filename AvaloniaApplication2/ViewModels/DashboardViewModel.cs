@@ -1,8 +1,12 @@
 using AvaloniaApplication2.Core;
 using AvaloniaApplication2.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
-using System.Linq;
+using CommunityToolkit.Mvvm.Input;
+using System;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Linq;
+using System.Threading;
 
 namespace AvaloniaApplication2.ViewModels
 {
@@ -12,6 +16,7 @@ namespace AvaloniaApplication2.ViewModels
     public partial class DashboardViewModel : ViewModelBase
     {
         private readonly PluginManager _pluginManager;
+        private Timer? _timer;
 
         [ObservableProperty]
         private int totalPlugins;
@@ -25,20 +30,132 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty]
         private string recentActivity = "暂无活动";
 
+        // 问候语
+        [ObservableProperty]
+        private string greeting = "早上好";
+
+        // 时间
+        [ObservableProperty]
+        private string currentTime = "00:00";
+
+        // 日期
+        [ObservableProperty]
+        private string currentDate = "";
+
+        // 天气（示例数据）
+        [ObservableProperty]
+        private string weatherLocation = "北京市";
+
+        [ObservableProperty]
+        private string weatherTemperature = "24°C";
+
+        [ObservableProperty]
+        private string weatherIcon = "☀️";
+
+        // 系统监控
+        [ObservableProperty]
+        private int cpuUsage = 32;
+
+        [ObservableProperty]
+        private int memoryUsage = 84;
+
+        // 快捷应用列表
+        public ObservableCollection<QuickAppInfo> QuickApps { get; } = new();
+
+        // 待办事项列表
+        public ObservableCollection<TodoItem> TodoItems { get; } = new();
+
+        // 剪贴板历史
+        public ObservableCollection<ClipboardItem> ClipboardHistory { get; } = new();
+
         public DashboardViewModel(PluginManager pluginManager)
         {
             _pluginManager = pluginManager;
-            
+
             // 监听插件集合变化
             _pluginManager.PluginInfos.CollectionChanged += OnPluginCollectionChanged;
-            
+
             // 监听每个插件的属性变化
             foreach (var plugin in _pluginManager.PluginInfos)
             {
                 plugin.PropertyChanged += OnPluginPropertyChanged;
             }
-            
+
+            // 初始化数据
             UpdateStatistics();
+            UpdateGreeting();
+            UpdateTime();
+            InitializeQuickApps();
+            InitializeTodoItems();
+            InitializeClipboardHistory();
+
+            // 启动定时器更新时间
+            _timer = new Timer(UpdateTimerCallback, null, 1000, 1000);
+        }
+
+        private void UpdateTimerCallback(object? state)
+        {
+            UpdateTime();
+            // 模拟系统监控数据更新（实际应用中应从系统 API 获取）
+            UpdateSystemMonitor();
+        }
+
+        private void UpdateTime()
+        {
+            var now = DateTime.Now;
+            CurrentTime = now.ToString("HH:mm");
+            UpdateGreeting();
+
+            // 更新日期（每分钟的 0 秒更新一次）
+            if (now.Second == 0)
+            {
+                currentDate = now.ToString("yyyy年M月d日 dddd");
+            }
+        }
+
+        private void UpdateGreeting()
+        {
+            var hour = DateTime.Now.Hour;
+            Greeting = hour switch
+            {
+                >= 6 and < 12 => "早上好",
+                >= 12 and < 14 => "中午好",
+                >= 14 and < 18 => "下午好",
+                >= 18 and < 22 => "晚上好",
+                _ => "夜深了"
+            };
+        }
+
+        private void UpdateSystemMonitor()
+        {
+            // 模拟数据波动（实际应从系统 API 获取）
+            var random = new Random();
+            CpuUsage = Math.Clamp(CpuUsage + random.Next(-5, 6), 10, 90);
+            MemoryUsage = Math.Clamp(MemoryUsage + random.Next(-2, 3), 50, 95);
+        }
+
+        private void InitializeQuickApps()
+        {
+            QuickApps.Add(new QuickAppInfo { Name = "终端控制台", Icon = "⌨️" });
+            QuickApps.Add(new QuickAppInfo { Name = "代码编辑器", Icon = "📝" });
+            QuickApps.Add(new QuickAppInfo { Name = "设计画板", Icon = "🎨" });
+            QuickApps.Add(new QuickAppInfo { Name = "数据库管理", Icon = "💾" });
+            QuickApps.Add(new QuickAppInfo { Name = "快捷便签", Icon = "📋" });
+            QuickApps.Add(new QuickAppInfo { Name = "高级计算器", Icon = "🧮" });
+            QuickApps.Add(new QuickAppInfo { Name = "翻译工具", Icon = "🌐" });
+        }
+
+        private void InitializeTodoItems()
+        {
+            TodoItems.Add(new TodoItem { Title = "完成前端原型设计", IsCompleted = true });
+            TodoItems.Add(new TodoItem { Title = "技术栈选型会议", IsCompleted = false });
+            TodoItems.Add(new TodoItem { Title = "编写底层接口", IsCompleted = false });
+        }
+
+        private void InitializeClipboardHistory()
+        {
+            ClipboardHistory.Add(new ClipboardItem { Content = "npm install @tauri-apps/cli", Time = DateTime.Now.AddMinutes(-5) });
+            ClipboardHistory.Add(new ClipboardItem { Content = "https://github.com/tauri-apps...", Time = DateTime.Now.AddMinutes(-15) });
         }
 
         /// <summary>
@@ -46,7 +163,6 @@ namespace AvaloniaApplication2.ViewModels
         /// </summary>
         private void OnPluginCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            // 为新添加的插件订阅属性变化事件
             if (e.NewItems != null)
             {
                 foreach (var item in e.NewItems)
@@ -57,8 +173,7 @@ namespace AvaloniaApplication2.ViewModels
                     }
                 }
             }
-            
-            // 为移除的插件取消订阅
+
             if (e.OldItems != null)
             {
                 foreach (var item in e.OldItems)
@@ -69,7 +184,7 @@ namespace AvaloniaApplication2.ViewModels
                     }
                 }
             }
-            
+
             UpdateStatistics();
         }
 
@@ -78,8 +193,7 @@ namespace AvaloniaApplication2.ViewModels
         /// </summary>
         private void OnPluginPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            // 当 IsEnabled 或 IsLoaded 属性变化时更新统计
-            if (e.PropertyName == nameof(PluginInfo.IsEnabled) || 
+            if (e.PropertyName == nameof(PluginInfo.IsEnabled) ||
                 e.PropertyName == nameof(PluginInfo.IsLoaded))
             {
                 UpdateStatistics();
@@ -117,5 +231,46 @@ namespace AvaloniaApplication2.ViewModels
         {
             UpdateStatistics();
         }
+
+        public void Dispose()
+        {
+            _timer?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 快捷应用信息
+    /// </summary>
+    public partial class QuickAppInfo : ObservableObject
+    {
+        [ObservableProperty]
+        private string name = "";
+
+        [ObservableProperty]
+        private string icon = "";
+    }
+
+    /// <summary>
+    /// 待办事项
+    /// </summary>
+    public partial class TodoItem : ObservableObject
+    {
+        [ObservableProperty]
+        private string title = "";
+
+        [ObservableProperty]
+        private bool isCompleted;
+    }
+
+    /// <summary>
+    /// 剪贴板项目
+    /// </summary>
+    public partial class ClipboardItem : ObservableObject
+    {
+        [ObservableProperty]
+        private string content = "";
+
+        [ObservableProperty]
+        private DateTime time;
     }
 }

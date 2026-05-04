@@ -55,15 +55,25 @@ namespace AvaloniaApplication2.Converters
     }
 
     /// <summary>
-    /// 整数到布尔值转换器，用于根据集合数量判断是否可见
+    /// 整数到布尔值转换器，用于根据集合数量判断是否可见，或比较两个整数是否相等
     /// </summary>
     public class IntToBoolConverter : IValueConverter
     {
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (value is int count)
+            if (value is int count && parameter is string param)
             {
+                // 如果参数是数字，则比较是否相等
+                if (int.TryParse(param, out int compareValue))
+                {
+                    return count == compareValue;
+                }
+                // 否则判断是否大于 0
                 return count > 0;
+            }
+            if (value is int countNoParam)
+            {
+                return countNoParam > 0;
             }
             return false;
         }

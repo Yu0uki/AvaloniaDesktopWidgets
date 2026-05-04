@@ -20,6 +20,11 @@ namespace AvaloniaApplication2.ViewModels
         private readonly NotificationService _notificationService;
         private readonly ILogger _logger;
 
+        // 窗口控制事件
+        public event EventHandler? WindowMinimizeRequested;
+        public event EventHandler<WindowStateEventArgs>? WindowMaximizeRequested;
+        public event EventHandler? WindowCloseRequested;
+
         [ObservableProperty]
         private object? currentPage;
 
@@ -44,11 +49,22 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty]
         private string? selectedPluginId;
 
+        [ObservableProperty]
+        private bool isSidebarExpanded = false;
+
+        [ObservableProperty]
+        private string sidebarWidth = "64";
+
+        [ObservableProperty]
+        private string searchQuery = "";
+
         // 已启动的插件列表（用于导航栏显示）
         public ObservableCollection<PluginInfo> RunningPlugins { get; }
 
         // 通知集合
         public ObservableCollection<NotificationMessage> Notifications => _notificationService.Notifications;
+
+        public event EventHandler? FocusSearchRequested;
 
         public MainWindowViewModel(PluginManager pluginManager, SettingsService settingsService)
         {
@@ -139,7 +155,8 @@ namespace AvaloniaApplication2.ViewModels
         [RelayCommand]
         private void MinimizeWindow()
         {
-            // 由视图处理
+            // 通过事件通知视图进行最小化操作
+            WindowMinimizeRequested?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -149,6 +166,18 @@ namespace AvaloniaApplication2.ViewModels
         private void ToggleMaximize()
         {
             IsMaximized = !IsMaximized;
+            // 通过事件通知视图进行最大化/还原操作
+            WindowMaximizeRequested?.Invoke(this, new WindowStateEventArgs(IsMaximized));
+        }
+
+        /// <summary>
+        /// 关闭窗口
+        /// </summary>
+        [RelayCommand]
+        private void CloseWindow()
+        {
+            // 通过事件通知视图进行关闭操作
+            WindowCloseRequested?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -338,13 +367,39 @@ namespace AvaloniaApplication2.ViewModels
             NavigateToDashboard();
         }
 
+
         /// <summary>
-        /// 关闭窗口
+        /// 聚焦搜索框
         /// </summary>
         [RelayCommand]
-        private void CloseWindow()
+        private void FocusSearch()
         {
-            // 由视图处理
+            _logger.Information("聚焦搜索框 (Ctrl+K)");
+            // 搜索框的焦点由视图处理
+        }
+
+        /// <summary>
+        /// 切换侧边栏展开/折叠状态
+        /// </summary>
+        [RelayCommand]
+        private void ToggleSidebar()
+        {
+            IsSidebarExpanded = !IsSidebarExpanded;
+            SidebarWidth = IsSidebarExpanded ? "220" : "64";
+            _logger.Information("侧边栏{State}", IsSidebarExpanded ? "展开" : "折叠");
+        }
+    }
+
+    /// <summary>
+    /// 窗口状态事件参数
+    /// </summary>
+    public class WindowStateEventArgs : EventArgs
+    {
+        public bool IsMaximized { get; }
+
+        public WindowStateEventArgs(bool isMaximized)
+        {
+            IsMaximized = isMaximized;
         }
     }
 }
