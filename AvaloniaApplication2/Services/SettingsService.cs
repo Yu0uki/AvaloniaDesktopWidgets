@@ -110,5 +110,41 @@ namespace AvaloniaApplication2.Services
             _settings.AutoLoadPlugins = enabled;
             await SaveSettingsAsync();
         }
+
+        public async Task UpdateAccentColorAsync(int accentColorIndex)
+        {
+            _settings.AccentColorIndex = accentColorIndex;
+            await SaveSettingsAsync();
+        }
+
+        public async Task UpdateLanguageAsync(int languageIndex)
+        {
+            _settings.LanguageIndex = languageIndex;
+            await SaveSettingsAsync();
+        }
+
+        public async Task UpdateBackgroundOpacityAsync(double opacity)
+        {
+            _settings.BackgroundOpacity = opacity;
+            await SaveSettingsAsync();
+        }
+
+        public async Task UpdateCustomBackgroundImageAsync(bool enabled)
+        {
+            _settings.CustomBackgroundImage = enabled;
+            await SaveSettingsAsync();
+        }
+
+        public async Task UpdateBackgroundImagePathAsync(string path)
+        {
+            _settings.BackgroundImagePath = path;
+            await SaveSettingsAsync();
+        }
+
+        public async Task UpdateDefaultStartupPageAsync(int index)
+        {
+            _settings.DefaultStartupPageIndex = index;
+            await SaveSettingsAsync();
+        }
     }
 }

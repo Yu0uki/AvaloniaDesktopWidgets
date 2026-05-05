@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabbit Workspace - 设置</title>
+    <!-- 引入 Material Symbols 字体图标库以匹配原型中的图标 -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <style>
+        :root {
+            /* 颜色变量：提取自提供的参考图片 */
+            --bg-body: #f3f4f6;         /* 整体浅灰色背景 */
+            --bg-sidebar: #ffffff;      /* 侧边栏纯白背景 */
+            --bg-card: #ffffff;         /* 设置项卡片纯白背景 */
+            --text-primary: #1f2937;    /* 主标题文字颜色 */
+            --text-secondary: #6b7280;  /* 描述性文字颜色 */
+            --accent-color: #2563eb;    /* 交互强调色（蓝色） */
+            --border-light: #e5e7eb;    /* 浅色边框 */
+            --border-focus: #93c5fd;    /* 聚焦状态边框 */
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', "Microsoft YaHei", sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* --- 左侧边栏 (基于原型1) --- */
+        .sidebar {
+            width: 68px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 24px;
+            z-index: 10;
+        }
+
+        .nav-item {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background-color: #eff6ff;
+            color: var(--accent-color);
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* --- 右侧主内容区 --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        /* 顶部导航条 (参考图片右上角的设置分类) */
+        .top-bar {
+            height: 60px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0 40px;
+            background: linear-gradient(to bottom, #ffffff, transparent);
+        }
+
+        .settings-tabs {
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .tab {
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding-bottom: 4px;
+        }
+
+        .tab.active {
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        /* 设置主体区域 */
+        .settings-container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 20px 40px 60px;
+            width: 100%;
+        }
+
+        /* 大标题头部 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #d1d5db;
+        }
+
+        .page-header .material-symbols-outlined {
+            font-size: 48px;
+            color: #4b5563;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        /* 设置项列表 (卡片风格) */
+        .settings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* 卡片之间的间距 */
+        }
+
+        .setting-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: box-shadow 0.2s;
+        }
+
+        .setting-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .setting-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .setting-info .material-symbols-outlined {
+            color: var(--text-secondary);
+            font-size: 24px;
+        }
+
+        .setting-text .title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .setting-text .desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* --- 表单控件样式 --- */
+        
+        /* 下拉选择框 */
+        select {
+            padding: 6px 32px 6px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 16px;
+        }
+        
+        select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        /* 开关 Toggle */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #d1d5db;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* 单选框组 (主题色选择) */
+        .radio-group {
+            display: flex;
+            gap: 16px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .radio-label input[type="radio"] {
+            accent-color: var(--accent-color);
+            width: 16px;
+            height: 16px;
+        }
+
+        /* 滑块 Range */
+        input[type="range"] {
+            accent-color: var(--accent-color);
+            width: 200px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 左侧边栏 (提取自原型1的菜单结构) -->
+    <aside class="sidebar">
+        <div class="nav-item" title="折叠菜单">
+            <span class="material-symbols-outlined">menu</span>
+        </div>
+        <div class="nav-item" title="仪表盘">
+            <span class="material-symbols-outlined">dashboard</span>
+        </div>
+        <div class="nav-item" title="应用库">
+            <span class="material-symbols-outlined">apps</span>
+        </div>
+        <div class="nav-item" title="多任务视图">
+            <span class="material-symbols-outlined">view_cozy</span>
+        </div>
+        <div class="nav-item" title="本地文件">
+            <span class="material-symbols-outlined">folder</span>
+        </div>
+        
+        <div class="sidebar-bottom">
+            <div class="nav-item" title="扩展管理">
+                <span class="material-symbols-outlined">extension</span>
+            </div>
+            <!-- 当前激活的设置项 -->
+            <div class="nav-item active" title="系统设置">
+                <span class="material-symbols-outlined">settings</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 右侧主内容区 -->
+    <main class="main-content">
+        <!-- 顶部标签页 (参考图片右上角) -->
+        <header class="top-bar">
+            <div class="settings-tabs">
+                <div class="tab">通用设置</div>
+                <div class="tab active">界面设置</div>
+                <div class="tab">插件设置</div>
+                <div class="tab">高级设置</div>
+                <div class="tab">关于</div>
+            </div>
+        </header>
+
+        <!-- 设置内容主体 -->
+        <div class="settings-container">
+            <!-- 页面大标题 -->
+            <div class="page-header">
+                <span class="material-symbols-outlined">settings</span>
+                <h1>设置</h1>
+            </div>
+
+            <!-- 分组标题 -->
+            <h2 class="section-title">界面设置</h2>
+
+            <!-- 设置项列表 -->
+            <div class="settings-list">
+                
+                <!-- 设置项 1：下拉框 -->
+                <div class="setting-card">
+                    <div class="setting-info">
+                        <span class="material-symbols-outlined">desktop_windows</span>
+                        <div class="setting-text">
+                            <div class="title">启动时默认打开页面</div>
+                        </div>
+                    </div>
+                    <div class="setting-control">
+                        <select>
+                            <option>仪表盘 (Dashboard)</option>
+                            <option>应用库</option>
+                            <option>上次打开的页面</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 设置项 2：开关 (带描述) -->
+                <div class="setting-card">
+                    <div class="setting-info">
+                        <span class="material-symbols-outlined">block</span>
+                        <div class="setting-text">
+                            <div class="title">关闭程序内所有广告</div>
+                            <div class="desc">仅赞助用户可设置</div>
+                        </div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" disabled>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 设置项 3：下拉框 -->
+                <div class="setting-card">
+                    <div class="setting-info">
+                        <span class="material-symbols-outlined">dark_mode</span>
+                        <div class="setting-text">
+                            <div class="title">主题</div>
+                            <div class="desc">设置程序的主题风格</div>
+                        </div>
+                    </div>
+                    <div class="setting-control">
+                        <select>
+                            <option>跟随系统</option>
+                            <option>浅色模式</option>
+                            <option>深色模式</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 设置项 4：单选组 -->
+                <div class="setting-card">
+                    <div class="setting-info">
+                        <span class="material-symbols-outlined">palette</span>
+                        <div class="setting-text">
+                            <div class="title">主题色</div>
+                            <div class="desc">设置程序中显示的强调色</div>
+                        </div>
+                    </div>
+                    <div class="setting-control radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="theme-color" checked> 跟随系统
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="theme-color"> 自定义
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 设置项 5：下拉框 -->
+                <div class="setting-card">
+                    <div class="setting-info">
+                        <span class="material-symbols-outlined">translate</span>
+                        <div class="setting-text">
+                            <div class="title">语言</div>
+                            <div class="desc">设置程序首选的显示语言</div>
+                        </div>
+                    </div>
+                    <div class="setting-control">
+                        <select>
+                            <option>Auto</option>
+                            <option>简体中文</option>
+                            <option>English</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 设置项 6：滑块 -->
+                <div class="setting-card">
+                    <div class="setting-info">
+                        <span class="material-symbols-outlined">opacity</span>
+                        <div class="setting-text">
+                            <div class="title">背景不透明度</div>
+                        </div>
+                    </div>
+                    <div class="setting-control">
+                        <input type="range" min="0" max="100" value="85">
+                    </div>
+                </div>
+
+                <!-- 设置项 7：开关 -->
+                <div class="setting-card">
+                    <div class="setting-info">
+                        <span class="material-symbols-outlined">wallpaper</span>
+                        <div class="setting-text">
+                            <div class="title">自定义背景图片</div>
+                        </div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

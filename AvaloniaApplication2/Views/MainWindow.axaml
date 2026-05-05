@@ -22,8 +22,8 @@
         <!-- 顶部栏样式 -->
         <Style Selector="Border.topbar">
             <Setter Property="Background" Value="{DynamicResource TopBarBackgroundBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource TopBarAccentBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,2"/>
             <Setter Property="Height" Value="48"/>
         </Style>
 
@@ -148,10 +148,10 @@
         <Grid Grid.Row="1" ColumnDefinitions="Auto,*">
             
             <!-- 左侧导航栏 -->
-            <Border Grid.Column="0" Width="{Binding SidebarWidth}" 
-                    Background="{DynamicResource SidebarBackgroundBrush}" 
-                    BorderBrush="{DynamicResource BorderBrush}" 
-                    BorderThickness="0,0,1,0">
+            <Border Grid.Column="0" Width="{Binding SidebarWidth}"
+                    Background="{DynamicResource SidebarBackgroundBrush}"
+                    BorderBrush="{DynamicResource TopBarAccentBorderBrush}"
+                    BorderThickness="0,0,2,0">
                 <Grid RowDefinitions="*,Auto,Auto">
                     
                     <!-- 上方：系统导航 -->
@@ -174,11 +174,11 @@
                         </Button>
 
                         <!-- 返回按钮（仅在显示插件视图时显示） -->
-                        <Button Classes="nav-button" Command="{Binding NavigateBackToDashboardCommand}" 
+                        <Button Classes="nav-button" Command="{Binding NavigateBackToDashboardCommand}"
                                 ToolTip.Tip="返回主页"
                                 IsVisible="{Binding IsShowingPluginView}"
-                                Background="#E3F2FD">
-                            <TextBlock Text="←" FontSize="20" HorizontalAlignment="Center" Foreground="#0078D4"/>
+                                Background="{DynamicResource NavActiveBrush}">
+                            <TextBlock Text="←" FontSize="20" HorizontalAlignment="Center" Foreground="{DynamicResource AccentBrush}"/>
                         </Button>
 
                         <!-- 插件管理 -->

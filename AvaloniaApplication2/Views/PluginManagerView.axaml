@@ -29,12 +29,12 @@
                 </StackPanel>
 
                 <!-- 拖拽区域提示 -->
-                <Border Classes="card" BorderBrush="#0078D4" BorderThickness="2" 
-                        Background="#F0F8FF" Padding="40"
+                <Border Classes="card" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="2"
+                        Background="{DynamicResource CardBackgroundBrush}" Padding="40"
                         DragDrop.AllowDrop="True">
                     <StackPanel HorizontalAlignment="Center" Spacing="10">
                         <TextBlock Text="📥" FontSize="48" HorizontalAlignment="Center"/>
-                        <TextBlock Text="拖拽 DLL 文件到此处" FontSize="16" Foreground="#0078D4" 
+                        <TextBlock Text="拖拽 DLL 文件到此处" FontSize="16" Foreground="{DynamicResource AccentBrush}"
                                    HorizontalAlignment="Center" FontWeight="Medium"/>
                         <TextBlock Text="或者将文件拖拽到窗口任意位置" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" 
                                    HorizontalAlignment="Center"/>
@@ -53,8 +53,8 @@
                                         <Grid.ColumnSpacing>15</Grid.ColumnSpacing>
                                         
                                         <!-- 插件图标 -->
-                                        <Border Grid.Column="0" Width="50" Height="50" 
-                                                Background="#F0F0F0" CornerRadius="8"
+                                        <Border Grid.Column="0" Width="50" Height="50"
+                                                Background="{DynamicResource BorderBrush}" CornerRadius="8"
                                                 HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <TextBlock Text="🔌" FontSize="24" 
                                                        HorizontalAlignment="Center" 
