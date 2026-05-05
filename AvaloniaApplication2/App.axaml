@@ -25,15 +25,18 @@
     <Application.Styles>
         <FluentTheme />
     </Application.Styles>
-    
-    <!-- 全局浅色主题样式（默认） -->
+
+    <!-- 全局主题样式 -->
     <Application.Resources>
         <ResourceDictionary>
             <!-- 注册转换器 -->
             <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
             <converters:BoolToBrushConverter x:Key="BoolToBrushConverter"/>
             <converters:IntToBoolConverter x:Key="IntToBoolConverter"/>
-            
+
+            <!-- 运行时可变资源（可被主题色修改覆盖） -->
+            <SolidColorBrush x:Key="TopBarAccentBorderBrush" Color="#E0E0E0"/>
+
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Dark">
                     <Color x:Key="WindowBackgroundColor">#1E1E1E</Color>

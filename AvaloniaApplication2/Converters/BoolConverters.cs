@@ -1,5 +1,6 @@
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using Avalonia.Media.TextFormatting;
 using System;
 using System.Globalization;
 
@@ -76,6 +77,24 @@ namespace AvaloniaApplication2.Converters
                 return countNoParam > 0;
             }
             return false;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// 布尔值到删除线转换器，用于待办事项完成时显示删除线
+    /// </summary>
+    public class BoolToStrikethroughConverter : IValueConverter
+    {
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is bool isCompleted && isCompleted)
+                return TextDecorations.Strikethrough;
+            return null;
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

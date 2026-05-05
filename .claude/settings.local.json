@@ -3,7 +3,19 @@
     "allow": [
       "Bash(dotnet build *)",
       "Bash(xxd -l 16 \"f:/Programs/project/AvaloniaApplication2/Plugins/JsonToolboxPlugin/Views/SettingsView.axaml\")",
-      "Bash(dotnet clean *)"
+      "Bash(dotnet clean *)",
+      "Bash(dotnet test *)",
+      "Bash(dotnet publish *)",
+      "Bash(ls -la \"F:/Programs/project/publish/release-2.0.1/temp/\" | head -40)",
+      "Read(//f/Programs/project/publish/release-2.0.1/temp/**)",
+      "Read(//f/Programs/project/publish/release-2.0.1/**)",
+      "Bash(mv temp/* .)",
+      "Bash(rmdir temp *)",
+      "Bash(mkdir -p Plugins Data Logs)",
+      "Bash(rm -rf \"F:/Programs/project/publish/release-2.0.1\" && echo \"cleaned old publish\")"
+    ],
+    "additionalDirectories": [
+      "F:\\Programs\\project\\publish\\release-2.0.1"
     ]
   }
 }

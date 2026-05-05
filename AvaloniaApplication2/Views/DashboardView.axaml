@@ -2,8 +2,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:AvaloniaApplication2.ViewModels"
+             xmlns:conv="clr-namespace:AvaloniaApplication2.Converters"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
              x:Class="AvaloniaApplication2.Views.DashboardView">
+
+    <UserControl.Resources>
+        <conv:BoolToStrikethroughConverter x:Key="StrikethroughConverter"/>
+    </UserControl.Resources>
 
     <UserControl.Styles>
         <!-- 卡片样式 -->
@@ -20,9 +26,31 @@
                 </Transitions>
             </Setter>
         </Style>
-        
+
         <Style Selector="Border.card:pointerover">
             <Setter Property="BoxShadow" Value="0 6 16 0 #1A000000"/>
+        </Style>
+
+        <!-- 卡片标题图标 + 文字 (匹配原型设计语言) -->
+        <Style Selector="TextBlock.card-header-icon">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBlock.card-header-text">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- 城市选择 ComboBox (匹配原型 select 样式) -->
+        <Style Selector="ComboBox.city-selector">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
         </Style>
 
         <!-- 进度条样式 -->
@@ -41,111 +69,210 @@
         <Style Selector="Border.progress-fill.warning">
             <Setter Property="Background" Value="#D83B01"/>
         </Style>
+
+        <!-- 待办事项完成样式 -->
+        <Style Selector="TextBlock.todo-completed">
+            <Setter Property="TextDecorations" Value="Strikethrough"/>
+            <Setter Property="Opacity" Value="0.6"/>
+        </Style>
+
+        <!-- 可点击项目 -->
+        <Style Selector="Border.clickable">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.clickable:pointerover">
+            <Setter Property="Opacity" Value="0.8"/>
+        </Style>
+
+        <!-- 快捷应用项 -->
+        <Style Selector="Border.quick-app-item">
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Width" Value="72"/>
+            <Setter Property="Height" Value="80"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.quick-app-item:pointerover">
+            <Setter Property="Opacity" Value="0.75"/>
+        </Style>
+
+        <!-- 删除按钮 -->
+        <Style Selector="Border.delete-btn">
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.delete-btn:pointerover">
+            <Setter Property="Background" Value="#33FF0000"/>
+        </Style>
+        <Style Selector="Border.quick-app-item:pointerover Border.delete-btn">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
     </UserControl.Styles>
 
     <ScrollViewer Padding="32">
         <StackPanel Spacing="24">
-            
+
             <!-- 问候语和副标题 -->
-            <StackPanel Spacing="8">
-                <TextBlock Text="{Binding Greeting, StringFormat='{}{0}，开发者'}" 
-                           FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                <TextBlock Text="{Binding RecentActivity}" 
-                           FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
-            </StackPanel>
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="8">
+                    <TextBlock Text="{Binding Greeting, StringFormat='{}{0}，开发者'}"
+                               FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding RecentActivity}"
+                               FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        VerticalAlignment="Center"
+                        Command="{Binding ToggleLayoutEditCommand}">
+                    <TextBlock Text="🔧" FontSize="18"
+                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                </Button>
+            </Grid>
 
             <!-- 仪表盘卡片网格 -->
-            <Grid ColumnDefinitions="*,2*,*" ColumnSpacing="20" RowDefinitions="Auto,Auto" RowSpacing="20">
-                
-                <!-- 时间与天气卡片 -->
-                <Border Grid.Row="0" Grid.Column="0" Classes="card">
-                    <StackPanel Spacing="12">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="{Binding WeatherIcon}" FontSize="18" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="0" Text="{Binding WeatherLocation}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Margin="24,0,0,0" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="1" Text="{Binding WeatherTemperature}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        </Grid>
-                        <TextBlock Text="{Binding CurrentTime}" FontSize="36" FontWeight="Light" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="{Binding CurrentDate}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                    </StackPanel>
+            <Grid ColumnDefinitions="*,2*,*" ColumnSpacing="20" RowDefinitions="Auto,Auto,Auto" RowSpacing="20">
+
+                <!-- ========== 时间与天气卡片 ========== -->
+                <Border Grid.Row="0" Grid.Column="0" Classes="card" IsVisible="{Binding ShowWeatherCard}">
+                    <Grid>
+                        <StackPanel Spacing="12">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <TextBlock Grid.Column="0" Text="{Binding WeatherIcon}" FontSize="18" VerticalAlignment="Center"/>
+                                <ComboBox Grid.Column="1" ItemsSource="{Binding Cities}"
+                                          SelectedItem="{Binding SelectedCity}"
+                                          Classes="city-selector"
+                                          Margin="8,0,0,0"
+                                          VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text="{Binding WeatherTemperature}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            </Grid>
+                            <TextBlock Text="{Binding CurrentTime}" FontSize="36" FontWeight="Light" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{Binding CurrentDate}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                        <Border IsVisible="{Binding IsEditingLayout}" Background="#88FFFFFF" CornerRadius="8" ZIndex="20">
+                            <Button Command="{Binding ToggleCardCommand}"
+                                    CommandParameter="Weather"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Padding="12,8">
+                                <TextBlock Text="隐藏此卡片"/>
+                            </Button>
+                        </Border>
+                    </Grid>
                 </Border>
 
-                <!-- 快捷应用卡片 (占 2 列 2 行) -->
-                <Border Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" Classes="card">
-                    <StackPanel Spacing="15">
+                <!-- ========== 快捷应用卡片 ========== -->
+                <Border Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" Classes="card" IsVisible="{Binding ShowQuickAppsCard}">
+                    <Grid>
+                        <StackPanel Spacing="15">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="⚡" FontSize="18"/>
                                 <TextBlock Text="快捷应用" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                             </StackPanel>
-                            <TextBlock Grid.Column="1" Text="✏️" FontSize="18" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <Button Grid.Column="1"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    Command="{Binding ToggleAddQuickAppCommand}">
+                                <TextBlock Text="✏️" FontSize="18" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            </Button>
                         </Grid>
-                        
-                        <!-- 快捷应用网格 -->
-                        <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="*,*" ColumnSpacing="12" RowSpacing="12" Margin="0,10,0,0">
-                            <!-- 第 1 行 -->
-                            <Border Grid.Row="0" Grid.Column="0" CornerRadius="12" Background="{DynamicResource BorderBrush}" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <StackPanel HorizontalAlignment="Center" Spacing="8">
-                                    <TextBlock Text="⌨️" FontSize="24" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="终端控制台" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Row="0" Grid.Column="1" CornerRadius="12" Background="{DynamicResource BorderBrush}" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <StackPanel HorizontalAlignment="Center" Spacing="8">
-                                    <TextBlock Text="📝" FontSize="24" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="代码编辑器" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Row="0" Grid.Column="2" CornerRadius="12" Background="{DynamicResource BorderBrush}" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <StackPanel HorizontalAlignment="Center" Spacing="8">
-                                    <TextBlock Text="🎨" FontSize="24" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="设计画板" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Row="0" Grid.Column="3" CornerRadius="12" Background="{DynamicResource BorderBrush}" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <StackPanel HorizontalAlignment="Center" Spacing="8">
-                                    <TextBlock Text="💾" FontSize="24" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="数据库管理" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-                            
-                            <!-- 第 2 行 -->
-                            <Border Grid.Row="1" Grid.Column="0" CornerRadius="12" Background="{DynamicResource BorderBrush}" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <StackPanel HorizontalAlignment="Center" Spacing="8">
-                                    <TextBlock Text="📋" FontSize="24" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="快捷便签" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Row="1" Grid.Column="1" CornerRadius="12" Background="{DynamicResource BorderBrush}" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <StackPanel HorizontalAlignment="Center" Spacing="8">
-                                    <TextBlock Text="🧮" FontSize="24" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="高级计算器" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Row="1" Grid.Column="2" CornerRadius="12" Background="{DynamicResource BorderBrush}" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <StackPanel HorizontalAlignment="Center" Spacing="8">
-                                    <TextBlock Text="🌐" FontSize="24" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="翻译工具" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Row="1" Grid.Column="3" CornerRadius="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <StackPanel HorizontalAlignment="Center" Spacing="8">
-                                    <TextBlock Text="➕" FontSize="24" HorizontalAlignment="Center" Foreground="#999999"/>
-                                    <TextBlock Text="添加应用" FontSize="12" Foreground="#999999" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
+
+                        <!-- 添加快捷应用输入框 -->
+                        <StackPanel Spacing="8" IsVisible="{Binding IsAddingQuickApp}">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding NewQuickAppText}"
+                                         Watermark="输入应用名称..."
+                                         FontSize="13"
+                                         Padding="8,6"/>
+                                <Button Grid.Column="1"
+                                        Command="{Binding AddQuickAppCommand}"
+                                        FontSize="13"
+                                        Padding="12,6">
+                                    <TextBlock Text="添加"/>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- 快捷应用列表 -->
+                        <ItemsControl ItemsSource="{Binding QuickApps}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Margin="0,6,0,0"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Classes="quick-app-item" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="6">
+                                        <Grid>
+                                            <!-- 删除按钮 -->
+                                            <Border Classes="delete-btn"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Top"
+                                                    Margin="4,-4,-4,4"
+                                                    ZIndex="10"
+                                                    Background="#44FF0000">
+                                                <Button Background="Transparent"
+                                                        BorderThickness="0"
+                                                        Padding="0"
+                                                        Command="{Binding $parent[ItemsControl].DataContext.RemoveQuickAppCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Text="✕" FontSize="10" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Button>
+                                            </Border>
+                                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+                                                <TextBlock Text="{Binding Icon}" FontSize="24" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
+                        <Border IsVisible="{Binding IsEditingLayout}" Background="#88FFFFFF" CornerRadius="8" ZIndex="20">
+                            <Button Command="{Binding ToggleCardCommand}"
+                                    CommandParameter="QuickApps"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Padding="12,8">
+                                <TextBlock Text="隐藏此卡片"/>
+                            </Button>
+                        </Border>
+                    </Grid>
                 </Border>
 
-                <!-- 系统监控卡片 -->
-                <Border Grid.Row="0" Grid.Column="2" Classes="card">
-                    <StackPanel Spacing="12">
+                <!-- ========== 系统监控卡片 ========== -->
+                <Border Grid.Row="0" Grid.Column="2" Classes="card" IsVisible="{Binding ShowSystemMonitorCard}">
+                    <Grid>
+                        <StackPanel Spacing="12">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="⚙️" FontSize="18"/>
                             <TextBlock Text="系统监控" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
-                        
+
                         <StackPanel Spacing="10">
                             <StackPanel Spacing="6">
                                 <Grid ColumnDefinitions="*,Auto">
@@ -156,7 +283,7 @@
                                     <Border Classes="progress-fill" HorizontalAlignment="Left" Width="{Binding CpuUsage}"/>
                                 </Border>
                             </StackPanel>
-                            
+
                             <StackPanel Spacing="6">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Column="0" Text="内存占用" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}"/>
@@ -168,50 +295,176 @@
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
+                        <Border IsVisible="{Binding IsEditingLayout}" Background="#88FFFFFF" CornerRadius="8" ZIndex="20">
+                            <Button Command="{Binding ToggleCardCommand}"
+                                    CommandParameter="SystemMonitor"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Padding="12,8">
+                                <TextBlock Text="隐藏此卡片"/>
+                            </Button>
+                        </Border>
+                    </Grid>
                 </Border>
 
-                <!-- 待办事项卡片 (占 2 行) -->
-                <Border Grid.Row="1" Grid.Column="0" Grid.RowSpan="2" Classes="card">
+                <!-- ========== 待办事项卡片 ========== -->
+                <Border Grid.Row="1" Grid.Column="0" Classes="card" IsVisible="{Binding ShowTodoCard}">
+                    <Grid>
                     <StackPanel Spacing="12">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="✓" FontSize="18"/>
                                 <TextBlock Text="待办事项" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                             </StackPanel>
-                            <TextBlock Grid.Column="1" Text="➕" FontSize="18" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         </Grid>
-                        
-                        <StackPanel Spacing="12" Margin="0,8,0,0">
-                            <CheckBox Content="完成前端原型设计" IsChecked="True" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14">
-                                <CheckBox.Styles>
-                                    <Style Selector="CheckBox:checked > TextBlock">
-                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
-                                    </Style>
-                                </CheckBox.Styles>
-                            </CheckBox>
-                            <CheckBox Content="技术栈选型会议" IsChecked="False" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="14"/>
-                            <CheckBox Content="编写底层接口" IsChecked="False" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="14"/>
-                        </StackPanel>
+
+                        <!-- 添加新待办 -->
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding NewTodoText}"
+                                     Watermark="输入新的待办事项..."
+                                     FontSize="13"
+                                     Padding="8,6"/>
+                            <Button Grid.Column="1"
+                                    Command="{Binding AddTodoItemCommand}"
+                                    FontSize="13"
+                                    Padding="12,6">
+                                <TextBlock Text="添加"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- 待办事项列表 -->
+                        <ItemsControl ItemsSource="{Binding TodoItems}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="10" Margin="0,4,0,0"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
+                                        <CheckBox Grid.Column="0"
+                                                  IsChecked="{Binding IsCompleted}"
+                                                  VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Title}"
+                                                   FontSize="14"
+                                                   TextDecorations="{Binding IsCompleted, Converter={StaticResource StrikethroughConverter}}"
+                                                   VerticalAlignment="Center"/>
+                                        <Button Grid.Column="2"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Padding="4,0"
+                                                Cursor="Hand"
+                                                Command="{Binding $parent[ItemsControl].DataContext.RemoveTodoItemCommand}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock Text="🗑️" FontSize="13"/>
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
+                        <Border IsVisible="{Binding IsEditingLayout}" Background="#88FFFFFF" CornerRadius="8" ZIndex="20">
+                            <Button Command="{Binding ToggleCardCommand}"
+                                    CommandParameter="Todo"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Padding="12,8">
+                                <TextBlock Text="隐藏此卡片"/>
+                            </Button>
+                        </Border>
+                    </Grid>
                 </Border>
 
-                <!-- 剪贴板历史 -->
-                <Border Grid.Row="1" Grid.Column="2" Classes="card">
+                <!-- ========== 剪贴板历史卡片 ========== -->
+                <Border Grid.Row="1" Grid.Column="2" Classes="card" IsVisible="{Binding ShowClipboardCard}">
+                    <Grid>
                     <StackPanel Spacing="12">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="📋" FontSize="18"/>
                             <TextBlock Text="剪贴板历史" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
-                        
-                        <StackPanel Spacing="8" Margin="0,4,0,0">
-                            <Border Background="{DynamicResource BorderBrush}" CornerRadius="4" Padding="8">
-                                <TextBlock Text="npm install @tauri-apps/cli" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
-                            </Border>
-                            <Border Background="{DynamicResource BorderBrush}" CornerRadius="4" Padding="8">
-                                <TextBlock Text="https://github.com/tauri-apps..." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
-                            </Border>
-                        </StackPanel>
+
+                        <ItemsControl ItemsSource="{Binding ClipboardHistory}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="8" Margin="0,4,0,0"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource BorderBrush}"
+                                            CornerRadius="4"
+                                            Padding="10,8"
+                                            Cursor="Hand"
+                                            Tapped="OnClipboardItemTapped">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Content}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding TimeDisplay}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       Opacity="0.6"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
+                        <Border IsVisible="{Binding IsEditingLayout}" Background="#88FFFFFF" CornerRadius="8" ZIndex="20">
+                            <Button Command="{Binding ToggleCardCommand}"
+                                    CommandParameter="Clipboard"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Padding="12,8">
+                                <TextBlock Text="隐藏此卡片"/>
+                            </Button>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- ========== 插件统计卡片 ========== -->
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Classes="card" IsVisible="{Binding ShowPluginStatsCard}">
+                    <Grid>
+                    <Grid ColumnDefinitions="*,*,*">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <TextBlock Text="📦" FontSize="18"/>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="插件总数" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <TextBlock Text="{Binding TotalPlugins}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <TextBlock Text="✅" FontSize="18"/>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="已加载" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <TextBlock Text="{Binding LoadedPlugins}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <TextBlock Text="⚡" FontSize="18"/>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="已启用" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <TextBlock Text="{Binding EnabledPlugins}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                        <Border IsVisible="{Binding IsEditingLayout}" Background="#88FFFFFF" CornerRadius="8" ZIndex="20">
+                            <Button Command="{Binding ToggleCardCommand}"
+                                    CommandParameter="PluginStats"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Padding="12,8">
+                                <TextBlock Text="隐藏此卡片"/>
+                            </Button>
+                        </Border>
+                    </Grid>
                 </Border>
             </Grid>
         </StackPanel>
