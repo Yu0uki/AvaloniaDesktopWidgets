@@ -182,34 +182,69 @@ namespace AvaloniaApplication2.ViewModels
         }
 
         /// <summary>
-        /// 处理文件放置
+        /// 处理文件放置（异步复制 + 直接加载，无延迟）
         /// </summary>
         public async Task OnDropAsync(IEnumerable<string> filePaths)
         {
             IsDragOver = false;
 
+            var pluginsDir = System.IO.Path.GetFullPath(_pluginManager.PluginsDirectory);
+            var loadedCount = 0;
+            var failCount = 0;
+
             foreach (var filePath in filePaths)
             {
-                if (filePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                if (!filePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                try
                 {
-                    try
+                    var fileName = System.IO.Path.GetFileName(filePath);
+                    var destPath = System.IO.Path.Combine(pluginsDir, fileName);
+
+                    // 异步复制文件（不阻塞 UI）
+                    using (var src = System.IO.File.OpenRead(filePath))
+                    using (var dst = System.IO.File.Create(destPath))
                     {
-                        var plugin = await _pluginManager.LoadPluginAsync(filePath);
-                        if (plugin != null)
-                        {
-                            StatusMessage = $"插件加载成功: {plugin.Name}";
-                        }
-                        else
-                        {
-                            StatusMessage = $"插件加载失败";
-                        }
+                        await src.CopyToAsync(dst);
                     }
-                    catch (System.Exception ex)
+
+                    StatusMessage = $"正在加载: {fileName}...";
+
+                    // 直接加载（LoadPluginAsync 内部已去重）
+                    var plugin = await _pluginManager.LoadPluginAsync(destPath);
+                    if (plugin != null)
                     {
-                        StatusMessage = $"加载失败: {ex.Message}";
+                        loadedCount++;
+                        StatusMessage = $"插件加载成功: {plugin.Name}";
+                    }
+                    else
+                    {
+                        failCount++;
                     }
                 }
+                catch (System.Exception ex)
+                {
+                    failCount++;
+                    StatusMessage = $"加载失败: {ex.Message}";
+                }
             }
+
+            if (loadedCount > 0 || failCount == 0)
+                StatusMessage = $"加载完成: {loadedCount} 个成功" + (failCount > 0 ? $", {failCount} 个失败" : "");
+        }
+
+        /// <summary>
+        /// 手动刷新插件列表（同步 ./Plugins 文件夹）
+        /// </summary>
+        [RelayCommand]
+        private async Task RefreshPluginsAsync()
+        {
+            StatusMessage = "正在同步插件...";
+            await _pluginManager.SyncPluginsFromFolderAsync();
+            StatusMessage = _pluginManager.PluginInfos.Count > 0
+                ? $"同步完成: {_pluginManager.PluginInfos.Count(p => p.IsLoaded)} 个插件已加载"
+                : "拖拽 DLL 文件到此处加载插件";
         }
     }
 }

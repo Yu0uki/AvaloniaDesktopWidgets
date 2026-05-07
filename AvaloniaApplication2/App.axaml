@@ -33,6 +33,8 @@
             <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
             <converters:BoolToBrushConverter x:Key="BoolToBrushConverter"/>
             <converters:IntToBoolConverter x:Key="IntToBoolConverter"/>
+            <converters:InvertBoolConverter x:Key="InvertBoolConverter"/>
+            <converters:IsPngPathConverter x:Key="IsPngPathConverter"/>
 
             <!-- 运行时可变资源（可被主题色修改覆盖） -->
             <SolidColorBrush x:Key="TopBarAccentBorderBrush" Color="#E0E0E0"/>

@@ -108,82 +108,74 @@ namespace AvaloniaApplication2
 
         #region 拖拽处理
 
-        private async void OnDragEnter(object? sender, DragEventArgs e)
+        private void OnDragEnter(object? sender, DragEventArgs e)
         {
-            // 防止重复触发
             if (_isDragOver) return;
+            _isDragOver = true;
 
-            // 检查是否包含文件
             if (e.Data.Contains(Avalonia.Input.DataFormats.Files))
             {
                 var files = e.Data.GetFiles();
                 if (files != null && files.Any(f => f.Path.LocalPath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
                 {
-                    e.DragEffects = Avalonia.Input.DragDropEffects.Copy;
-                    
-                    // 如果当前是插件管理器页面，触发视觉反馈
-                    if (_viewModel?.CurrentPage is PluginManagerViewModel pluginVM)
-                    {
-                        _isDragOver = true;
-                        pluginVM.OnDragEnter();
-                    }
+                    e.DragEffects = DragDropEffects.Copy;
                 }
                 else
                 {
-                    e.DragEffects = Avalonia.Input.DragDropEffects.None;
+                    e.DragEffects = DragDropEffects.None;
                 }
             }
             else
             {
-                e.DragEffects = Avalonia.Input.DragDropEffects.None;
+                e.DragEffects = DragDropEffects.None;
             }
         }
 
         private void OnDragLeave(object? sender, DragEventArgs e)
         {
-            // 如果当前是插件管理器页面，清除视觉反馈
-            if (_isDragOver && _viewModel?.CurrentPage is PluginManagerViewModel pluginVM)
-            {
-                _isDragOver = false;
-                pluginVM.OnDragLeave();
-            }
+            _isDragOver = false;
         }
 
         private async void OnDrop(object? sender, DragEventArgs e)
         {
-            // 重置拖拽状态
             _isDragOver = false;
 
-            var dataObject = e.Data;
-            if (dataObject.Contains(Avalonia.Input.DataFormats.Files))
+            // 如果当前已在插件管理页面，不再处理（由 PluginManagerView 处理）
+            if (_viewModel?.CurrentPage is PluginManagerViewModel)
+                return;
+
+            if (!e.Data.Contains(Avalonia.Input.DataFormats.Files))
+                return;
+
+            var files = e.Data.GetFiles();
+            if (files == null) return;
+
+            var dllFiles = files
+                .Select(f => f.Path.LocalPath)
+                .Where(f => f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (!dllFiles.Any()) return;
+
+            // 不在插件管理页面时，先跳转再处理
+            _viewModel?.NavigateToPluginManager();
+            await System.Threading.Tasks.Task.Delay(150);
+
+            if (_viewModel?.CurrentPage is PluginManagerViewModel newPluginVM)
             {
-                var files = dataObject.GetFiles();
-                if (files != null)
-                {
-                    var filePaths = files.Select(f => f.Path.LocalPath).ToList();
-                    var dllFiles = filePaths.Where(f => f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).ToList();
-                    
-                    if (dllFiles.Any())
-                    {
-                        // 如果当前是插件管理器页面，直接处理
-                        if (_viewModel?.CurrentPage is PluginManagerViewModel pluginManagerVM)
-                        {
-                            await pluginManagerVM.OnDropAsync(dllFiles);
-                        }
-                        else
-                        {
-                            // 否则切换到插件管理页面并处理
-                            _viewModel?.NavigateToPluginManager();
-                            
-                            // 等待页面切换后处理文件
-                            if (_viewModel?.CurrentPage is PluginManagerViewModel newPluginVM)
-                            {
-                                await System.Threading.Tasks.Task.Delay(100); // 短暂延迟确保页面加载
-                                await newPluginVM.OnDropAsync(dllFiles);
-                            }
-                        }
-                    }
-                }
+                await newPluginVM.OnDropAsync(dllFiles);
+            }
+        }
+
+        /// <summary>
+        /// 搜索框按键事件：回车触发网页搜索
+        /// </summary>
+        private void OnSearchBoxKeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && _viewModel != null)
+            {
+                e.Handled = true;
+                _viewModel.WebSearchCommand.Execute(null);
             }
         }
 

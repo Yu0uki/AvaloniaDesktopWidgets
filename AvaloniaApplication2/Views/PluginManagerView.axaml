@@ -8,9 +8,9 @@
              xmlns:converters="using:AvaloniaApplication2.Converters">
     
     <Grid>
-        <!-- 拖拽覆盖层 -->
-        <Border Name="DragOverlay" 
-                IsVisible="False"
+        <!-- 拖拽覆盖层（Opacity=0 隐藏，不触发布局重算） -->
+        <Border Name="DragOverlay"
+                Opacity="0" IsHitTestVisible="False"
                 Background="#CC0078D4" ZIndex="999"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="15">
@@ -23,10 +23,17 @@
             <StackPanel Spacing="20">
                 
                 <!-- 标题栏 -->
-                <StackPanel Spacing="5">
-                    <TextBlock Text="插件管理" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                    <TextBlock Text="{Binding StatusMessage}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                </StackPanel>
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="5">
+                        <TextBlock Text="插件管理" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{Binding StatusMessage}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="🔄 刷新插件" Padding="12,8"
+                            Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource AccentBrush}"
+                            CornerRadius="6" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
+                            VerticalAlignment="Center"
+                            Command="{Binding RefreshPluginsCommand}"/>
+                </Grid>
 
                 <!-- 拖拽区域提示 -->
                 <Border Classes="card" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="2"

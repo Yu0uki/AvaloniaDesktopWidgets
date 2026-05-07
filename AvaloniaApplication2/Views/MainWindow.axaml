@@ -120,13 +120,14 @@
                 <Border Grid.Column="1" Classes="search-box" HorizontalAlignment="Center" Margin="0,8">
                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
                         <TextBlock Grid.Column="0" Text="🔍" FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1" Text="{Binding SearchQuery}" 
-                                 Watermark="搜索应用、文件或网页..."
+                        <TextBox Grid.Column="1" Text="{Binding SearchQuery}"
+                                 Watermark="搜索应用、文件或网页... (回车搜索)"
                                  Background="Transparent"
                                  BorderThickness="0"
                                  Foreground="{DynamicResource TextPrimaryBrush}"
                                  FontSize="13"
-                                 VerticalAlignment="Center"/>
+                                 VerticalAlignment="Center"
+                                 KeyDown="OnSearchBoxKeyDown"/>
                         <Border Grid.Column="2" Background="{DynamicResource ShortcutKeyBackgroundBrush}" CornerRadius="4" Padding="4,2" VerticalAlignment="Center">
                             <TextBlock Text="Ctrl+K" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         </Border>

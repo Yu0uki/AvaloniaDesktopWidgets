@@ -8,13 +8,12 @@ namespace AvaloniaApplication2.Views
 {
     public partial class PluginManagerView : UserControl
     {
-        private bool _isDragOver;
+        private int _dragCount;
 
         public PluginManagerView()
         {
             InitializeComponent();
-            
-            // 注册拖拽事件
+
             this.AddHandler(DragDrop.DragEnterEvent, OnDragEnter);
             this.AddHandler(DragDrop.DragLeaveEvent, OnDragLeave);
             this.AddHandler(DragDrop.DropEvent, OnDrop);
@@ -23,10 +22,9 @@ namespace AvaloniaApplication2.Views
         protected override void OnDataContextChanged(EventArgs e)
         {
             base.OnDataContextChanged(e);
-            
+
             if (DataContext is PluginManagerViewModel vm)
             {
-                // 监听插件集合变化
                 vm.Plugins.CollectionChanged += (s, args) => UpdateEmptyState();
                 UpdateEmptyState();
             }
@@ -42,65 +40,51 @@ namespace AvaloniaApplication2.Views
 
         private void OnDragEnter(object? sender, DragEventArgs e)
         {
-            // 防止重复触发
-            if (_isDragOver) return;
+            if (!e.Data.Contains(Avalonia.Input.DataFormats.Files))
+                return;
 
-            // 检查是否包含文件
-            if (e.Data.Contains(Avalonia.Input.DataFormats.Files))
-            {
-                var files = e.Data.GetFiles();
-                if (files != null && files.Any(f => f.Path.LocalPath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
-                {
-                    e.DragEffects = Avalonia.Input.DragDropEffects.Copy;
-                    
-                    // 直接显示覆盖层，不通过 ViewModel
-                    _isDragOver = true;
-                    DragOverlay.IsVisible = true;
-                }
-                else
-                {
-                    e.DragEffects = Avalonia.Input.DragDropEffects.None;
-                }
-            }
-            else
-            {
-                e.DragEffects = Avalonia.Input.DragDropEffects.None;
-            }
+            var files = e.Data.GetFiles();
+            if (files == null || !files.Any(f =>
+                f.Path.LocalPath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
+                return;
+
+            // 使用 Opacity 而非 IsVisible 避免触发布局重算
+            if (_dragCount == 0)
+                DragOverlay.Opacity = 1;
+
+            _dragCount++;
         }
 
         private void OnDragLeave(object? sender, DragEventArgs e)
         {
-            // 清除视觉反馈
-            if (_isDragOver)
+            _dragCount--;
+            if (_dragCount <= 0)
             {
-                _isDragOver = false;
-                DragOverlay.IsVisible = false;
+                _dragCount = 0;
+                DragOverlay.Opacity = 0;
             }
         }
 
         private async void OnDrop(object? sender, DragEventArgs e)
         {
-            // 隐藏覆盖层
-            DragOverlay.IsVisible = false;
-            _isDragOver = false;
+            _dragCount = 0;
+            DragOverlay.Opacity = 0;
 
-            var dataObject = e.Data;
-            if (dataObject.Contains(Avalonia.Input.DataFormats.Files))
+            if (!e.Data.Contains(Avalonia.Input.DataFormats.Files))
+                return;
+
+            var files = e.Data.GetFiles();
+            if (files == null) return;
+
+            var dllFiles = files
+                .Select(f => f.Path.LocalPath)
+                .Where(f => f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (dllFiles.Any() && DataContext is PluginManagerViewModel vm)
             {
-                var files = dataObject.GetFiles();
-                if (files != null)
-                {
-                    var filePaths = files.Select(f => f.Path.LocalPath).ToList();
-                    var dllFiles = filePaths.Where(f => f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).ToList();
-                    
-                    if (dllFiles.Any())
-                    {
-                        if (DataContext is PluginManagerViewModel pluginManagerVM)
-                        {
-                            await pluginManagerVM.OnDropAsync(dllFiles);
-                        }
-                    }
-                }
+                // 立即异步处理，不阻塞 UI 线程
+                _ = vm.OnDropAsync(dllFiles);
             }
         }
     }

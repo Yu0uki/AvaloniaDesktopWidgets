@@ -139,16 +139,48 @@
                     <TextBlock Text="{Binding RecentActivity}"
                                FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
                 </StackPanel>
-                <Button Grid.Column="1"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Cursor="Hand"
-                        VerticalAlignment="Center"
-                        Command="{Binding ToggleLayoutEditCommand}">
-                    <TextBlock Text="🔧" FontSize="18"
-                               Foreground="{DynamicResource TextSecondaryBrush}"/>
-                </Button>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <!-- 重置布局按钮（编辑模式可见） -->
+                    <Button IsVisible="{Binding IsEditingLayout}"
+                            Content="↺ 重置布局" Padding="10,6"
+                            Background="Transparent" Foreground="#D83B01"
+                            CornerRadius="6" BorderBrush="#D83B01" BorderThickness="1"
+                            Cursor="Hand"
+                            Command="{Binding ResetLayoutCommand}"/>
+                    <!-- 布局编辑开关 -->
+                    <Button Background="Transparent" BorderThickness="0"
+                            Cursor="Hand" VerticalAlignment="Center"
+                            Command="{Binding ToggleLayoutEditCommand}">
+                        <TextBlock Text="🔧" FontSize="18"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </Button>
+                </StackPanel>
             </Grid>
+
+            <!-- 编辑模式：已隐藏卡片恢复面板 -->
+            <StackPanel Spacing="8" IsVisible="{Binding IsEditingLayout}" Margin="0,0,0,12">
+                <TextBlock Text="已隐藏的卡片：" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                <WrapPanel>
+                    <Button Margin="4" IsVisible="{Binding ShowWeatherCard, Converter={StaticResource InvertBoolConverter}}"
+                            Content="🌤 天气" Padding="8,4" CornerRadius="4"
+                            Command="{Binding ToggleCardCommand}" CommandParameter="Weather"/>
+                    <Button Margin="4" IsVisible="{Binding ShowQuickAppsCard, Converter={StaticResource InvertBoolConverter}}"
+                            Content="⚡ 快捷应用" Padding="8,4" CornerRadius="4"
+                            Command="{Binding ToggleCardCommand}" CommandParameter="QuickApps"/>
+                    <Button Margin="4" IsVisible="{Binding ShowSystemMonitorCard, Converter={StaticResource InvertBoolConverter}}"
+                            Content="⚙️ 系统监控" Padding="8,4" CornerRadius="4"
+                            Command="{Binding ToggleCardCommand}" CommandParameter="SystemMonitor"/>
+                    <Button Margin="4" IsVisible="{Binding ShowTodoCard, Converter={StaticResource InvertBoolConverter}}"
+                            Content="✓ 待办事项" Padding="8,4" CornerRadius="4"
+                            Command="{Binding ToggleCardCommand}" CommandParameter="Todo"/>
+                    <Button Margin="4" IsVisible="{Binding ShowClipboardCard, Converter={StaticResource InvertBoolConverter}}"
+                            Content="📋 剪贴板" Padding="8,4" CornerRadius="4"
+                            Command="{Binding ToggleCardCommand}" CommandParameter="Clipboard"/>
+                    <Button Margin="4" IsVisible="{Binding ShowPluginStatsCard, Converter={StaticResource InvertBoolConverter}}"
+                            Content="📦 插件统计" Padding="8,4" CornerRadius="4"
+                            Command="{Binding ToggleCardCommand}" CommandParameter="PluginStats"/>
+                </WrapPanel>
+            </StackPanel>
 
             <!-- 仪表盘卡片网格 -->
             <Grid ColumnDefinitions="*,2*,*" ColumnSpacing="20" RowDefinitions="Auto,Auto,Auto" RowSpacing="20">
@@ -201,10 +233,10 @@
 
                         <!-- 添加快捷应用输入框 -->
                         <StackPanel Spacing="8" IsVisible="{Binding IsAddingQuickApp}">
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                                 <TextBox Grid.Column="0"
                                          Text="{Binding NewQuickAppText}"
-                                         Watermark="输入应用名称..."
+                                         Watermark="输入应用名称 (如 notepad)..."
                                          FontSize="13"
                                          Padding="8,6"/>
                                 <Button Grid.Column="1"
@@ -212,6 +244,12 @@
                                         FontSize="13"
                                         Padding="12,6">
                                     <TextBlock Text="添加"/>
+                                </Button>
+                                <Button Grid.Column="2"
+                                        Command="{Binding SelectQuickAppExeCommand}"
+                                        FontSize="13"
+                                        Padding="12,6">
+                                    <TextBlock Text="📂 选择程序"/>
                                 </Button>
                             </Grid>
                         </StackPanel>
@@ -225,7 +263,8 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Classes="quick-app-item" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="6">
+                                    <Border Classes="quick-app-item" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="6"
+                                            Tapped="OnQuickAppTapped">
                                         <Grid>
                                             <!-- 删除按钮 -->
                                             <Border Classes="delete-btn"
@@ -243,7 +282,12 @@
                                                 </Button>
                                             </Border>
                                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
-                                                <TextBlock Text="{Binding Icon}" FontSize="24" HorizontalAlignment="Center"/>
+                                                <!-- Emoji 图标 -->
+                                                <TextBlock Text="{Binding Icon}" FontSize="24" HorizontalAlignment="Center"
+                                                           IsVisible="{Binding Icon, Converter={StaticResource IsPngPathConverter}, ConverterParameter=invert}"/>
+                                                <!-- 提取的 PNG 图标 -->
+                                                <Image Source="{Binding Icon}" Width="28" Height="28"
+                                                       IsVisible="{Binding Icon, Converter={StaticResource IsPngPathConverter}}"/>
                                                 <TextBlock Text="{Binding Name}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
                                         </Grid>

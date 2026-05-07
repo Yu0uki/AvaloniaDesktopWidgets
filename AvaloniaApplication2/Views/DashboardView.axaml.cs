@@ -58,6 +58,15 @@ namespace AvaloniaApplication2.Views
             }
         }
 
+        private void OnQuickAppTapped(object? sender, TappedEventArgs e)
+        {
+            if (sender is not Control control) return;
+            if (control.DataContext is QuickAppInfo app && DataContext is DashboardViewModel vm)
+            {
+                vm.LaunchQuickAppCommand.Execute(app);
+            }
+        }
+
         private async void OnClipboardItemTapped(object? sender, TappedEventArgs e)
         {
             if (sender is not Control control)

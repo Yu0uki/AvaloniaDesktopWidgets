@@ -369,13 +369,39 @@ namespace AvaloniaApplication2.ViewModels
 
 
         /// <summary>
+        /// 网页搜索：打开默认浏览器搜索
+        /// </summary>
+        [RelayCommand]
+        private void WebSearch()
+        {
+            if (string.IsNullOrWhiteSpace(SearchQuery)) return;
+
+            try
+            {
+                var encoded = Uri.EscapeDataString(SearchQuery.Trim());
+                var url = $"https://www.bing.com/search?q={encoded}";
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+                _logger.Information("网页搜索: {Query}", SearchQuery);
+                _notificationService.ShowInfo($"正在搜索: {SearchQuery}");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "网页搜索失败: {Query}", SearchQuery);
+                _notificationService.ShowError("搜索失败，请检查浏览器是否可用");
+            }
+        }
+
+        /// <summary>
         /// 聚焦搜索框
         /// </summary>
         [RelayCommand]
         private void FocusSearch()
         {
             _logger.Information("聚焦搜索框 (Ctrl+K)");
-            // 搜索框的焦点由视图处理
         }
 
         /// <summary>
