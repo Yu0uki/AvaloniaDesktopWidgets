@@ -331,33 +331,52 @@
                 <Border Grid.Row="0" Grid.Column="2" Classes="card" IsVisible="{Binding ShowSystemMonitorCard}">
                     <Grid>
                         <StackPanel Spacing="12">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{x:Static core:FluentIcons.Computer}" FontFamily="Segoe Fluent Icons" FontSize="18" Foreground="{DynamicResource AccentBrush}"/>
-                            <TextBlock Text="系统监控" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                        </StackPanel>
-
-                        <StackPanel Spacing="10">
-                            <StackPanel Spacing="6">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Grid.Column="0" Text="CPU 占用" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding CpuUsage, StringFormat='{}{0}%'}" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                </Grid>
-                                <Border Classes="progress-bar" ClipToBounds="True">
-                                    <Border Classes="progress-fill" HorizontalAlignment="Left" Width="{Binding CpuUsage}"/>
-                                </Border>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{x:Static core:FluentIcons.Computer}" FontFamily="Segoe Fluent Icons" FontSize="18" Foreground="{DynamicResource AccentBrush}"/>
+                                <TextBlock Text="系统监控" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                             </StackPanel>
 
-                            <StackPanel Spacing="6">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Grid.Column="0" Text="内存占用" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding MemoryUsage, StringFormat='{}{0}%'}" FontSize="12" Foreground="#D83B01"/>
-                                </Grid>
-                                <Border Classes="progress-bar" ClipToBounds="True">
-                                    <Border Classes="progress-fill warning" HorizontalAlignment="Left" Width="{Binding MemoryUsage}"/>
-                                </Border>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20">
+                                <!-- CPU 竖条 -->
+                                <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                    <TextBlock Text="{Binding CpuUsage, StringFormat='{}{0}%'}"
+                                               FontSize="13" FontWeight="Bold" HorizontalAlignment="Center"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <!-- 轨 + 填充 -->
+                                    <Border Width="22" Height="72" CornerRadius="11"
+                                            Background="{DynamicResource BorderBrush}">
+                                        <Border Width="22" CornerRadius="11"
+                                                Height="{Binding CpuFillHeight}"
+                                                VerticalAlignment="Bottom">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding CpuColor}"/>
+                                            </Border.Background>
+                                        </Border>
+                                    </Border>
+                                    <TextBlock Text="CPU" FontSize="10" HorizontalAlignment="Center"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                </StackPanel>
+
+                                <!-- 内存 竖条 -->
+                                <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                    <TextBlock Text="{Binding MemoryUsage, StringFormat='{}{0}%'}"
+                                               FontSize="13" FontWeight="Bold" HorizontalAlignment="Center"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <Border Width="22" Height="72" CornerRadius="11"
+                                            Background="{DynamicResource BorderBrush}">
+                                        <Border Width="22" CornerRadius="11"
+                                                Height="{Binding MemFillHeight}"
+                                                VerticalAlignment="Bottom">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding MemColor}"/>
+                                            </Border.Background>
+                                        </Border>
+                                    </Border>
+                                    <TextBlock Text="内存" FontSize="10" HorizontalAlignment="Center"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                </StackPanel>
                             </StackPanel>
                         </StackPanel>
-                    </StackPanel>
                         <Border IsVisible="{Binding IsEditingLayout}" Background="#88FFFFFF" CornerRadius="8" ZIndex="20">
                             <Button Command="{Binding ToggleCardCommand}"
                                     CommandParameter="SystemMonitor"

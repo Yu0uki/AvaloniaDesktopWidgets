@@ -107,6 +107,18 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty] private string selectedCity = "扬州市";
         [ObservableProperty] private int cpuUsage = 32;
         [ObservableProperty] private int memoryUsage = 84;
+
+        public Avalonia.Media.Color CpuColor => UsageColor(CpuUsage);
+        public Avalonia.Media.Color MemColor => UsageColor(MemoryUsage);
+        public double CpuFillHeight => Math.Clamp(CpuUsage * 0.72, 0, 72);
+        public double MemFillHeight => Math.Clamp(MemoryUsage * 0.72, 0, 72);
+
+        private static Avalonia.Media.Color UsageColor(int pct) => pct switch
+        {
+            >= 80 => Avalonia.Media.Color.FromRgb(209, 52, 56),
+            >= 50 => Avalonia.Media.Color.FromRgb(255, 140, 0),
+            _     => Avalonia.Media.Color.FromRgb(0, 120, 212)
+        };
         [ObservableProperty] private string newTodoText = "";
         [ObservableProperty] private string newQuickAppText = "";
         [ObservableProperty] private bool isAddingQuickApp;
@@ -295,6 +307,10 @@ namespace AvaloniaApplication2.ViewModels
             var random = new Random();
             CpuUsage = Math.Clamp(CpuUsage + random.Next(-5, 6), 10, 90);
             MemoryUsage = Math.Clamp(MemoryUsage + random.Next(-2, 3), 50, 95);
+            OnPropertyChanged(nameof(CpuColor));
+            OnPropertyChanged(nameof(MemColor));
+            OnPropertyChanged(nameof(CpuFillHeight));
+            OnPropertyChanged(nameof(MemFillHeight));
         }
 
         /// <summary>
