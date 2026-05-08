@@ -9,168 +9,272 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace AvaloniaApplication2.ViewModels
 {
     public partial class DashboardViewModel : ViewModelBase
     {
         private readonly PluginManager _pluginManager;
+        private readonly HttpClient _httpClient = new();
         private Timer? _timer;
+        private DateTime _lastWeatherFetch = DateTime.MinValue;
+        private static readonly TimeSpan WeatherCacheDuration = TimeSpan.FromMinutes(30);
 
-        [ObservableProperty]
-        private int totalPlugins;
+        // 城市坐标 (lat, lon) — 用于 Open-Meteo API
+        private static readonly Dictionary<string, (double lat, double lon)> CityCoordinates = new()
+        {
+            ["北京市"] = (39.90, 116.41),
+            ["上海市"] = (31.23, 121.47),
+            ["广州市"] = (23.13, 113.26),
+            ["深圳市"] = (22.54, 114.06),
+            ["杭州市"] = (30.29, 120.15),
+            ["成都市"] = (30.57, 104.07),
+            ["武汉市"] = (30.59, 114.31),
+            ["南京市"] = (32.06, 118.80),
+            ["西安市"] = (34.26, 108.94),
+            ["重庆市"] = (29.43, 106.91),
+            ["扬州市"] = (32.39, 119.42),
+        };
 
-        [ObservableProperty]
-        private int loadedPlugins;
+        // wttr.in 天气代码 → (图标, 描述)
+        private static readonly Dictionary<string, (string icon, string desc)> WttrCodeMap = new()
+        {
+            ["113"] = ("☀️", "晴朗"),
+            ["116"] = ("⛅", "多云"),
+            ["119"] = ("☁️", "阴天"),
+            ["122"] = ("☁️", "阴天"),
+            ["143"] = ("🌫️", "雾"),
+            ["176"] = ("🌦️", "阵雨"),
+            ["179"] = ("🌨️", "阵雪"),
+            ["182"] = ("🌨️", "雨夹雪"),
+            ["185"] = ("🌨️", "冻雨"),
+            ["200"] = ("⛈️", "雷暴"),
+            ["227"] = ("🌨️", "雪"),
+            ["230"] = ("🌨️", "暴雪"),
+            ["248"] = ("🌫️", "雾"),
+            ["260"] = ("🌫️", "雾"),
+            ["263"] = ("🌦️", "小雨"),
+            ["266"] = ("🌦️", "小雨"),
+            ["281"] = ("🌨️", "冻雨"),
+            ["284"] = ("🌨️", "冻雨"),
+            ["293"] = ("🌦️", "小雨"),
+            ["296"] = ("🌦️", "小雨"),
+            ["299"] = ("🌧️", "中雨"),
+            ["302"] = ("🌧️", "中雨"),
+            ["305"] = ("🌧️", "大雨"),
+            ["308"] = ("🌧️", "大雨"),
+            ["311"] = ("🌨️", "冻雨"),
+            ["314"] = ("🌨️", "冻雨"),
+            ["317"] = ("🌨️", "雨夹雪"),
+            ["320"] = ("🌨️", "雨夹雪"),
+            ["323"] = ("🌨️", "小雪"),
+            ["326"] = ("🌨️", "小雪"),
+            ["329"] = ("🌨️", "中雪"),
+            ["332"] = ("🌨️", "中雪"),
+            ["335"] = ("🌨️", "大雪"),
+            ["338"] = ("🌨️", "大雪"),
+            ["350"] = ("🌨️", "冰雹"),
+            ["353"] = ("🌦️", "阵雨"),
+            ["356"] = ("🌧️", "大雨"),
+            ["359"] = ("🌧️", "暴雨"),
+            ["362"] = ("🌨️", "雨夹雪"),
+            ["365"] = ("🌨️", "雨夹雪"),
+            ["368"] = ("🌨️", "小雪"),
+            ["371"] = ("🌨️", "大雪"),
+            ["374"] = ("🌨️", "冰雹"),
+            ["377"] = ("🌨️", "冰雹"),
+            ["386"] = ("⛈️", "雷阵雨"),
+            ["389"] = ("⛈️", "大雷雨"),
+            ["392"] = ("⛈️", "雷阵雪"),
+            ["395"] = ("🌨️", "大雪"),
+        };
 
-        [ObservableProperty]
-        private int enabledPlugins;
+        [ObservableProperty] private int totalPlugins;
+        [ObservableProperty] private int loadedPlugins;
+        [ObservableProperty] private int enabledPlugins;
+        [ObservableProperty] private string recentActivity = "暂无活动";
+        [ObservableProperty] private string greeting = "早上好";
+        [ObservableProperty] private string currentTime = "00:00";
+        [ObservableProperty] private string currentDate = "";
+        [ObservableProperty] private string weatherLocation = "扬州市";
+        [ObservableProperty] private string weatherTemperature = "--°C";
+        [ObservableProperty] private string weatherIcon = "☀️";
+        [ObservableProperty] private string weatherDescription = "加载中...";
+        [ObservableProperty] private string selectedCity = "扬州市";
+        [ObservableProperty] private int cpuUsage = 32;
+        [ObservableProperty] private int memoryUsage = 84;
 
-        [ObservableProperty]
-        private string recentActivity = "暂无活动";
+        public Avalonia.Media.Color CpuColor => UsageColor(CpuUsage);
+        public Avalonia.Media.Color MemColor => UsageColor(MemoryUsage);
+        public double CpuFillHeight => Math.Clamp(CpuUsage * 0.72, 0, 72);
+        public double MemFillHeight => Math.Clamp(MemoryUsage * 0.72, 0, 72);
 
-        // 问候语
-        [ObservableProperty]
-        private string greeting = "早上好";
+        private static Avalonia.Media.Color UsageColor(int pct) => pct switch
+        {
+            >= 80 => Avalonia.Media.Color.FromRgb(209, 52, 56),
+            >= 50 => Avalonia.Media.Color.FromRgb(255, 140, 0),
+            _     => Avalonia.Media.Color.FromRgb(0, 120, 212)
+        };
+        [ObservableProperty] private string newTodoText = "";
+        [ObservableProperty] private string newQuickAppText = "";
+        [ObservableProperty] private bool isAddingQuickApp;
+        [ObservableProperty] private bool isEditingLayout;
+        [ObservableProperty] private bool showWeatherCard = true;
+        [ObservableProperty] private bool showQuickAppsCard = true;
+        [ObservableProperty] private bool showSystemMonitorCard = true;
+        [ObservableProperty] private bool showTodoCard = true;
+        [ObservableProperty] private bool showClipboardCard = true;
+        [ObservableProperty] private bool clipboardExpanded;
+        [ObservableProperty] private bool showPluginStatsCard = true;
 
-        // 时间
-        [ObservableProperty]
-        private string currentTime = "00:00";
-
-        // 日期
-        [ObservableProperty]
-        private string currentDate = "";
-
-        // 天气
-        [ObservableProperty]
-        private string weatherLocation = "北京市";
-
-        [ObservableProperty]
-        private string weatherTemperature = "24°C";
-
-        [ObservableProperty]
-        private string weatherIcon = "☀️";
-
-        [ObservableProperty]
-        private string weatherDescription = "晴朗";
-
-        // 所选城市
-        [ObservableProperty]
-        private string selectedCity = "北京市";
-
-        // 系统监控
-        [ObservableProperty]
-        private int cpuUsage = 32;
-
-        [ObservableProperty]
-        private int memoryUsage = 84;
-
-        // 新待办事项输入
-        [ObservableProperty]
-        private string newTodoText = "";
-
-        // 新快捷应用输入
-        [ObservableProperty]
-        private string newQuickAppText = "";
-
-        // 是否显示添加快捷应用输入框
-        [ObservableProperty]
-        private bool isAddingQuickApp;
-
-        // 快捷应用列表
         public ObservableCollection<QuickAppInfo> QuickApps { get; } = new();
-
-        // 待办事项列表
         public ObservableCollection<TodoItem> TodoItems { get; } = new();
+        private readonly ClipboardService _clipboardService;
+        public ObservableCollection<ClipboardItem> ClipboardHistory => _clipboardService.History;
 
-        // 剪贴板历史
-        public ObservableCollection<ClipboardItem> ClipboardHistory { get; } = new();
-
-        // 布局编辑模式
-        [ObservableProperty]
-        private bool isEditingLayout;
-
-        // 卡片可见性
-        [ObservableProperty]
-        private bool showWeatherCard = true;
-
-        [ObservableProperty]
-        private bool showQuickAppsCard = true;
-
-        [ObservableProperty]
-        private bool showSystemMonitorCard = true;
-
-        [ObservableProperty]
-        private bool showTodoCard = true;
-
-        [ObservableProperty]
-        private bool showClipboardCard = true;
-
-        [ObservableProperty]
-        private bool showPluginStatsCard = true;
-
-        // 城市列表
         public ObservableCollection<string> Cities { get; } = new()
         {
             "北京市", "上海市", "广州市", "深圳市", "杭州市",
             "成都市", "武汉市", "南京市", "西安市", "重庆市", "扬州市"
         };
 
-        // 各城市模拟天气数据
-        private static readonly Dictionary<string, (string temp, string icon, string desc)> CityWeatherData = new()
-        {
-            ["北京市"] = ("24°C", "☀️", "晴朗"),
-            ["上海市"] = ("26°C", "⛅", "多云"),
-            ["广州市"] = ("30°C", "🌤️", "晴转多云"),
-            ["深圳市"] = ("29°C", "☀️", "晴朗"),
-            ["杭州市"] = ("25°C", "🌦️", "阵雨"),
-            ["成都市"] = ("22°C", "☁️", "阴天"),
-            ["武汉市"] = ("27°C", "⛅", "多云"),
-            ["南京市"] = ("26°C", "🌤️", "晴转多云"),
-            ["西安市"] = ("23°C", "☀️", "晴朗"),
-            ["重庆市"] = ("28°C", "🌤️", "晴转多云"),
-            ["扬州市"] = ("24°C", "☀️", "晴朗"),
-        };
-
         public DashboardViewModel(PluginManager pluginManager)
         {
             _pluginManager = pluginManager;
+            _clipboardService = DependencyInjection.ServiceContainer.GetRequiredService<ClipboardService>();
 
             _pluginManager.PluginInfos.CollectionChanged += OnPluginCollectionChanged;
-
             foreach (var plugin in _pluginManager.PluginInfos)
-            {
                 plugin.PropertyChanged += OnPluginPropertyChanged;
-            }
 
-            // 加载持久化数据
             LoadDashboardData();
-
             UpdateStatistics();
             UpdateGreeting();
             UpdateTime();
 
+            _ = FetchWeatherAsync(SelectedCity);
+
             _timer = new Timer(UpdateTimerCallback, null, 1000, 1000);
         }
 
-        // 城市切换时更新天气
         partial void OnSelectedCityChanged(string value)
         {
             WeatherLocation = value;
-            if (CityWeatherData.TryGetValue(value, out var weather))
+            _ = FetchWeatherAsync(value, force: true);
+        }
+
+        private async Task FetchWeatherAsync(string city, bool force = false)
+        {
+            // 非强制刷新时，遵守缓存策略
+            if (!force
+                && (DateTime.Now - _lastWeatherFetch) < WeatherCacheDuration
+                && WeatherLocation == city && WeatherTemperature != "--°C")
+                return;
+
+            // 优先 wttr.in，回退 Open-Meteo
+            var result = await TryFetchFromWttrAsync(city)
+                      ?? (CityCoordinates.TryGetValue(city, out var c)
+                          ? await TryFetchFromOpenMeteoAsync(c.lat, c.lon)
+                          : null);
+
+            if (result != null)
             {
-                WeatherTemperature = weather.temp;
-                WeatherIcon = weather.icon;
-                WeatherDescription = weather.desc;
+                WeatherTemperature = result.Value.temp;
+                WeatherIcon = result.Value.icon;
+                WeatherDescription = result.Value.desc;
+                _lastWeatherFetch = DateTime.Now;
+            }
+            else if (WeatherTemperature == "--°C")
+            {
+                WeatherTemperature = "24°C";
+                WeatherIcon = "☀️";
+                WeatherDescription = "离线";
             }
         }
 
+        private async Task<(string temp, string icon, string desc)?> TryFetchFromWttrAsync(string city)
+        {
+            try
+            {
+                var encoded = Uri.EscapeDataString(city);
+                var url = $"https://wttr.in/{encoded}?format=j1";
+                _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("curl/8.0");
+
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+                var json = await _httpClient.GetStringAsync(url, cts.Token);
+
+                using var doc = JsonDocument.Parse(json);
+                var current = doc.RootElement.GetProperty("current_condition")[0];
+
+                var tempC = current.GetProperty("temp_C").GetString() ?? "?";
+                var code = current.GetProperty("weatherCode").GetString() ?? "";
+                var weatherDesc = current.GetProperty("weatherDesc")[0]
+                    .GetProperty("value").GetString() ?? "";
+
+                var icon = WttrCodeMap.TryGetValue(code, out var w) ? w.icon : "🌤️";
+                return ($"{tempC}°C", icon, weatherDesc);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async Task<(string temp, string icon, string desc)?> TryFetchFromOpenMeteoAsync(double lat, double lon)
+        {
+            try
+            {
+                var url = $"https://api.open-meteo.com/v1/forecast" +
+                          $"?latitude={lat}&longitude={lon}" +
+                          $"&current_weather=true&timezone=Asia/Shanghai";
+
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+                var json = await _httpClient.GetStringAsync(url, cts.Token);
+
+                using var doc = JsonDocument.Parse(json);
+                var current = doc.RootElement.GetProperty("current_weather");
+                var tempC = current.GetProperty("temperature").GetDouble();
+                var code = current.GetProperty("weathercode").GetInt32();
+
+                var desc = code switch
+                {
+                    0 => "晴朗", 1 => "大部晴朗", 2 => "多云", 3 => "阴天",
+                    45 or 48 => "雾",
+                    >= 51 and <= 55 => "毛毛雨", >= 61 and <= 65 => "雨",
+                    >= 71 and <= 77 => "雪", >= 80 and <= 82 => "阵雨",
+                    >= 85 and <= 86 => "阵雪", >= 95 => "雷暴",
+                    _ => "未知"
+                };
+                var icon = code switch
+                {
+                    0 => "☀️", 1 => "🌤️", 2 => "⛅", 3 => "☁️",
+                    45 or 48 => "🌫️",
+                    >= 51 and <= 55 => "🌦️", >= 61 and <= 65 => "🌧️",
+                    >= 71 and <= 77 => "🌨️", >= 80 and <= 82 => "🌦️",
+                    >= 85 and <= 86 => "🌨️", >= 95 => "⛈️",
+                    _ => "🌤️"
+                };
+                return ($"{tempC:F0}°C", icon, desc);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private int _tickCount;
         private void UpdateTimerCallback(object? state)
         {
             UpdateTime();
             UpdateSystemMonitor();
+
+            // 每 30 分钟刷新一次天气
+            if (++_tickCount % 1800 == 0)
+                _ = FetchWeatherAsync(SelectedCity);
         }
 
         private void UpdateTime()
@@ -203,6 +307,80 @@ namespace AvaloniaApplication2.ViewModels
             var random = new Random();
             CpuUsage = Math.Clamp(CpuUsage + random.Next(-5, 6), 10, 90);
             MemoryUsage = Math.Clamp(MemoryUsage + random.Next(-2, 3), 50, 95);
+            OnPropertyChanged(nameof(CpuColor));
+            OnPropertyChanged(nameof(MemColor));
+            OnPropertyChanged(nameof(CpuFillHeight));
+            OnPropertyChanged(nameof(MemFillHeight));
+        }
+
+        /// <summary>
+        /// 将旧英文名称迁移为中文名称，返回 (displayName, exePath)。非系统工具返回原值。
+        /// </summary>
+        private static (string name, string exePath) MigrateSystemTool(string name, string exePath)
+        {
+            var known = new Dictionary<string, (string display, string exe)>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["notepad"] = ("记事本", "notepad.exe"),
+                ["notepad.exe"] = ("记事本", "notepad.exe"),
+                ["powershell"] = ("终端", "powershell.exe"),
+                ["powershell.exe"] = ("终端", "powershell.exe"),
+                ["mspaint"] = ("画图", "mspaint.exe"),
+                ["mspaint.exe"] = ("画图", "mspaint.exe"),
+                ["calc"] = ("计算器", "calc.exe"),
+                ["calc.exe"] = ("计算器", "calc.exe"),
+                ["explorer"] = ("文件管理器", "explorer.exe"),
+                ["explorer.exe"] = ("文件管理器", "explorer.exe"),
+                ["ms-settings:"] = ("系统设置", "ms-settings:"),
+                ["soundrecorder"] = ("", ""), // 废弃，不再添加
+            };
+
+            // 已经是中文名，直接匹配 ExePath
+            var reverse = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["记事本"] = "notepad.exe",
+                ["终端"] = "powershell.exe",
+                ["画图"] = "mspaint.exe",
+                ["计算器"] = "calc.exe",
+                ["文件管理器"] = "explorer.exe",
+                ["系统设置"] = "ms-settings:",
+            };
+
+            if (reverse.TryGetValue(name, out var knownExe))
+            {
+                if (string.IsNullOrEmpty(exePath))
+                    return (name, knownExe);
+                return (name, exePath);
+            }
+
+            if (known.TryGetValue(name, out var mapped))
+                return mapped;
+
+            // 用户自定义应用，保持不变
+            return (name, exePath);
+        }
+
+        /// 首次启动时添加默认系统工具（仅当无任何已保存数据时触发）
+        /// </summary>
+        private void EnsureDefaultSystemTools()
+        {
+            // 仅在无保存数据时才添加默认工具（避免重复叠加）
+            // QuickApps 已有来自 LoadDashboardData 恢复的数据时跳过
+            if (QuickApps.Count > 0) return;
+
+            var defaults = new (string name, string exePath, string icon)[]
+            {
+                ("记事本",     "notepad.exe",     "📝"),
+                ("终端",       "powershell.exe",  "⌨️"),
+                ("画图",       "mspaint.exe",     "🎨"),
+                ("计算器",     "calc.exe",        "🧮"),
+                ("文件管理器", "explorer.exe",    "📂"),
+                ("系统设置",   "ms-settings:",    "⚙️"),
+            };
+
+            foreach (var (name, exePath, icon) in defaults)
+            {
+                QuickApps.Add(new QuickAppInfo { Name = name, Icon = icon, ExePath = exePath });
+            }
         }
 
         // ===== 待办事项命令 =====
@@ -264,6 +442,90 @@ namespace AvaloniaApplication2.ViewModels
         }
 
         [RelayCommand]
+        private async Task SelectQuickAppExeAsync()
+        {
+            try
+            {
+                var lifetime = App.Current?.ApplicationLifetime
+                    as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime;
+                if (lifetime?.MainWindow?.StorageProvider is { } storage)
+                {
+                    var fileTypes = new Avalonia.Platform.Storage.FilePickerFileType[]
+                    {
+                        new("可执行程序") { Patterns = new[] { "*.exe", "*.bat", "*.cmd", "*.lnk" } }
+                    };
+                    var files = await storage.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+                    {
+                        Title = "选择可执行程序",
+                        AllowMultiple = false,
+                        FileTypeFilter = fileTypes
+                    });
+
+                    if (files != null && files.Count > 0)
+                    {
+                        var filePath = files[0].Path.LocalPath;
+                        var name = System.IO.Path.GetFileNameWithoutExtension(filePath);
+                        var icon = ExtractExeIcon(filePath, name);
+                        QuickApps.Add(new QuickAppInfo
+                        {
+                            Name = name,
+                            Icon = icon,
+                            ExePath = filePath
+                        });
+                        SaveDashboardData();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Warning(ex, "选择可执行程序失败");
+            }
+        }
+
+        private static string ExtractExeIcon(string exePath, string appName)
+        {
+            try
+            {
+                using var icon = System.Drawing.Icon.ExtractAssociatedIcon(exePath);
+                if (icon == null) return "🖥️";
+
+                using var bitmap = icon.ToBitmap();
+                var iconDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "icons");
+                System.IO.Directory.CreateDirectory(iconDir);
+                var pngPath = System.IO.Path.Combine(iconDir, $"{appName}.png");
+                bitmap.Save(pngPath, System.Drawing.Imaging.ImageFormat.Png);
+                return pngPath;
+            }
+            catch
+            {
+                return "🖥️";
+            }
+        }
+
+        [RelayCommand]
+        private void LaunchQuickApp(QuickAppInfo? app)
+        {
+            if (app == null) return;
+
+            try
+            {
+                var target = string.IsNullOrWhiteSpace(app.ExePath)
+                    ? app.Name
+                    : app.ExePath;
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = target,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Warning(ex, "启动快捷应用失败: {App}", app.Name);
+            }
+        }
+
+        [RelayCommand]
         private void RemoveQuickApp(QuickAppInfo? app)
         {
             if (app != null)
@@ -276,9 +538,28 @@ namespace AvaloniaApplication2.ViewModels
         // ===== 布局编辑命令 =====
 
         [RelayCommand]
+        private void ToggleClipboard()
+        {
+            ClipboardExpanded = !ClipboardExpanded;
+        }
+
+        [RelayCommand]
         private void ToggleLayoutEdit()
         {
             IsEditingLayout = !IsEditingLayout;
+        }
+
+        [RelayCommand]
+        private void ResetLayout()
+        {
+            ShowWeatherCard = true;
+            ShowQuickAppsCard = true;
+            ShowSystemMonitorCard = true;
+            ShowTodoCard = true;
+            ShowClipboardCard = true;
+            ShowPluginStatsCard = true;
+            IsEditingLayout = false;
+            SaveDashboardData();
         }
 
         [RelayCommand]
@@ -312,31 +593,12 @@ namespace AvaloniaApplication2.ViewModels
 
         public void AddClipboardItem(string content)
         {
-            if (string.IsNullOrWhiteSpace(content))
-                return;
-
-            // 去重：如果最新一条内容相同则跳过
-            if (ClipboardHistory.Count > 0 && ClipboardHistory[0].Content == content)
-                return;
-
-            ClipboardHistory.Insert(0, new ClipboardItem { Content = content, Time = DateTime.Now });
-
-            // 限制历史记录最多 50 条
-            while (ClipboardHistory.Count > 50)
-                ClipboardHistory.RemoveAt(ClipboardHistory.Count - 1);
+            _clipboardService.AddItem(content);
         }
 
         // ===== 数据持久化 =====
 
-        private string GetDataFilePath()
-        {
-            var dataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
-            if (!Directory.Exists(dataDir))
-                Directory.CreateDirectory(dataDir);
-            return Path.Combine(dataDir, "dashboard.json");
-        }
-
-        private void SaveDashboardData()
+        private async void SaveDashboardData()
         {
             try
             {
@@ -351,7 +613,8 @@ namespace AvaloniaApplication2.ViewModels
                     QuickApps = QuickApps.Select(q => new DashboardQuickApp
                     {
                         Name = q.Name,
-                        Icon = q.Icon
+                        Icon = q.Icon,
+                        ExePath = q.ExePath,
                     }).ToList(),
                     Layout = new DashboardLayout
                     {
@@ -364,12 +627,8 @@ namespace AvaloniaApplication2.ViewModels
                     }
                 };
 
-                var json = JsonSerializer.Serialize(data, new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
-                File.WriteAllText(GetDataFilePath(), json);
+                var settingsService = DependencyInjection.ServiceContainer.GetRequiredService<SettingsService>();
+                await settingsService.SaveDashboardLayoutAsync(data);
             }
             catch (Exception ex)
             {
@@ -377,27 +636,17 @@ namespace AvaloniaApplication2.ViewModels
             }
         }
 
-        private void LoadDashboardData()
+        private async void LoadDashboardData()
         {
             try
             {
-                var path = GetDataFilePath();
-                if (!File.Exists(path))
-                {
-                    // 首次使用，初始化默认数据
-                    InitializeDefaultData();
-                    return;
-                }
+                var settingsService = DependencyInjection.ServiceContainer.GetRequiredService<SettingsService>();
+                var data = await settingsService.GetDashboardLayoutAsync<DashboardData>();
 
-                var json = File.ReadAllText(path);
-                var data = JsonSerializer.Deserialize<DashboardData>(json, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
-
-                if (data == null)
+                if (data == null || (data.SelectedCity == null && data.TodoItems.Count == 0 && data.QuickApps.Count == 0))
                 {
                     InitializeDefaultData();
+                    EnsureDefaultSystemTools();
                     return;
                 }
 
@@ -405,14 +654,7 @@ namespace AvaloniaApplication2.ViewModels
                 if (!string.IsNullOrEmpty(data.SelectedCity) && Cities.Contains(data.SelectedCity))
                 {
                     SelectedCity = data.SelectedCity;
-                    // 手动触发天气更新，因为属性尚未初始化
                     WeatherLocation = data.SelectedCity;
-                    if (CityWeatherData.TryGetValue(data.SelectedCity, out var weather))
-                    {
-                        WeatherTemperature = weather.temp;
-                        WeatherIcon = weather.icon;
-                        WeatherDescription = weather.desc;
-                    }
                 }
 
                 // 恢复待办事项
@@ -423,11 +665,29 @@ namespace AvaloniaApplication2.ViewModels
                     TodoItems.Add(item);
                 }
 
-                // 恢复快捷应用
+                // 恢复快捷应用（含迁移逻辑：将旧英文名转为中文名）
+                var migratedNames = new HashSet<string>();
                 foreach (var q in data.QuickApps)
                 {
-                    QuickApps.Add(new QuickAppInfo { Name = q.Name, Icon = q.Icon });
+                    var (migratedName, migratedExe) = MigrateSystemTool(q.Name, q.ExePath ?? "");
+                    if (!string.IsNullOrEmpty(migratedExe))
+                    {
+                        // 通过 ExePath 去重：同一程序只保留一条
+                        var dedupKey = migratedExe;
+                        if (migratedNames.Contains(dedupKey)) continue;
+                        migratedNames.Add(dedupKey);
+                        QuickApps.Add(new QuickAppInfo { Name = migratedName, Icon = q.Icon, ExePath = migratedExe });
+                    }
+                    else
+                    {
+                        // 用户自定义应用：通过名称去重
+                        if (QuickApps.Any(a => a.Name == q.Name && a.ExePath == (q.ExePath ?? ""))) continue;
+                        QuickApps.Add(new QuickAppInfo { Name = q.Name, Icon = q.Icon, ExePath = q.ExePath ?? "" });
+                    }
                 }
+
+                // 确保默认系统工具都存在（补充迁移后可能缺失的）
+                EnsureDefaultSystemTools();
 
                 // 恢复布局设置
                 if (data.Layout != null)
@@ -449,12 +709,8 @@ namespace AvaloniaApplication2.ViewModels
 
         private void InitializeDefaultData()
         {
-            // 默认城市
-            SelectedCity = "北京市";
-            WeatherLocation = "北京市";
-            WeatherTemperature = "24°C";
-            WeatherIcon = "☀️";
-            WeatherDescription = "晴朗";
+            SelectedCity = "扬州市";
+            WeatherLocation = "扬州市";
 
             // 默认待办
             var defaults = new[]
@@ -470,18 +726,14 @@ namespace AvaloniaApplication2.ViewModels
                 TodoItems.Add(item);
             }
 
-            // 默认快捷应用
-            QuickApps.Add(new QuickAppInfo { Name = "终端控制台", Icon = "⌨️" });
-            QuickApps.Add(new QuickAppInfo { Name = "代码编辑器", Icon = "📝" });
-            QuickApps.Add(new QuickAppInfo { Name = "设计画板", Icon = "🎨" });
-            QuickApps.Add(new QuickAppInfo { Name = "数据库管理", Icon = "💾" });
-            QuickApps.Add(new QuickAppInfo { Name = "快捷便签", Icon = "📋" });
-            QuickApps.Add(new QuickAppInfo { Name = "高级计算器", Icon = "🧮" });
-            QuickApps.Add(new QuickAppInfo { Name = "翻译工具", Icon = "🌐" });
+            // 系统工具由 EnsureDefaultSystemTools() 统一补齐
 
-            // 默认剪贴板历史
-            ClipboardHistory.Add(new ClipboardItem { Content = "npm install @tauri-apps/cli", Time = DateTime.Now.AddMinutes(-5) });
-            ClipboardHistory.Add(new ClipboardItem { Content = "https://github.com/tauri-apps...", Time = DateTime.Now.AddMinutes(-15) });
+            // 默认剪贴板历史 (仅当为空时)
+            if (ClipboardHistory.Count == 0)
+            {
+                _clipboardService.AddItem("npm install @tauri-apps/cli");
+                _clipboardService.AddItem("https://github.com/tauri-apps/tauri");
+            }
         }
 
         // ===== 插件事件处理 =====
@@ -562,6 +814,10 @@ namespace AvaloniaApplication2.ViewModels
 
         [ObservableProperty]
         private string icon = "";
+
+        // 自定义 exe 路径（为空时使用 Name 作为系统命令启动）
+        [ObservableProperty]
+        private string exePath = "";
     }
 
     public partial class TodoItem : ObservableObject

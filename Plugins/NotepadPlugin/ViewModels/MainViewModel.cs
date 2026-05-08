@@ -87,7 +87,7 @@ namespace NotepadPlugin.ViewModels
         /// 新建笔记
         /// </summary>
         [RelayCommand]
-        private void NewNote()
+        public void NewNote()
         {
             try
             {
@@ -118,7 +118,7 @@ namespace NotepadPlugin.ViewModels
         /// 保存当前笔记
         /// </summary>
         [RelayCommand]
-        private async Task SaveNoteAsync()
+        public async Task SaveNoteAsync()
         {
             if (string.IsNullOrEmpty(SelectedNoteFile))
             {
@@ -150,7 +150,7 @@ namespace NotepadPlugin.ViewModels
         /// 删除当前笔记
         /// </summary>
         [RelayCommand]
-        private void DeleteNote()
+        public void DeleteNote()
         {
             if (string.IsNullOrEmpty(SelectedNoteFile))
             {
@@ -184,7 +184,7 @@ namespace NotepadPlugin.ViewModels
         /// 重命名当前笔记
         /// </summary>
         [RelayCommand]
-        private void RenameNote()
+        public void RenameNote()
         {
             if (string.IsNullOrEmpty(SelectedNoteFile))
             {

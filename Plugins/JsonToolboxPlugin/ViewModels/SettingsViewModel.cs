@@ -51,7 +51,7 @@ namespace JsonToolboxPlugin.ViewModels
         // ===== 命令 =====
 
         [RelayCommand]
-        private void SaveSettings()
+        public void SaveSettings()
         {
             try
             {
@@ -78,7 +78,7 @@ namespace JsonToolboxPlugin.ViewModels
         }
 
         [RelayCommand]
-        private void ResetSettings()
+        public void ResetSettings()
         {
             IndentSize = 2;
             EditorFontSize = 13.0;

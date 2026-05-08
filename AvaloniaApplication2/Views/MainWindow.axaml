@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:AvaloniaApplication2.ViewModels"
+        xmlns:core="clr-namespace:AvaloniaApplication2.Core"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="AvaloniaApplication2.MainWindow"
         Title="{Binding WindowTitle}"
@@ -23,8 +24,8 @@
         <Style Selector="Border.topbar">
             <Setter Property="Background" Value="{DynamicResource TopBarBackgroundBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource TopBarAccentBorderBrush}"/>
-            <Setter Property="BorderThickness" Value="0,0,0,2"/>
-            <Setter Property="Height" Value="48"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Height" Value="40"/>
         </Style>
 
         <!-- 搜索框样式 -->
@@ -37,7 +38,6 @@
             <Setter Property="Width" Value="320"/>
         </Style>
 
-        <!-- 搜索框获得焦点时 -->
         <Style Selector="Border.search-box:focus-within">
             <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
             <Setter Property="Background" Value="{DynamicResource SearchBoxFocusBackgroundBrush}"/>
@@ -49,136 +49,195 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="Width" Value="40"/>
+            <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Height" Value="40"/>
             <Setter Property="Margin" Value="0,2"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
-                </Transitions>
-            </Setter>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
-        
+
         <Style Selector="Button.nav-button:pointerover">
             <Setter Property="Background" Value="{DynamicResource NavHoverBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         </Style>
-        
+
         <Style Selector="Button.nav-button.active">
             <Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
         </Style>
 
-        <!-- 窗口控制按钮 -->
+        <!-- Win11 窗口控制按钮 -->
         <Style Selector="Button.window-control">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
-            <Setter Property="Width" Value="46"/>
-            <Setter Property="Height" Value="32"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="28"/>
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
-        
+
         <Style Selector="Button.window-control:pointerover">
             <Setter Property="Background" Value="{DynamicResource WindowControlHoverBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         </Style>
-        
+
         <Style Selector="Button.window-control.close:pointerover">
-            <Setter Property="Background" Value="#E81123"/>
+            <Setter Property="Background" Value="#C42B1C"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
 
-        <!-- 按钮通用样式 -->
+        <!-- 通知铃铛按钮 -->
+        <Style Selector="Button.bell-button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.bell-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource WindowControlHoverBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+
+        <!-- 红点徽章 -->
+        <Style Selector="Border.red-dot">
+            <Setter Property="Background" Value="#D13438"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Height" Value="8"/>
+        </Style>
+
+        <!-- 按钮通用过渡 -->
         <Style Selector="Button">
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.2"/>
                     <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                    <BrushTransition Property="Foreground" Duration="0:0:0.2"/>
                 </Transitions>
             </Setter>
         </Style>
+
+        <!-- 侧边栏文字标签 -->
+        <Style Selector="TextBlock.nav-label">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="8,0,0,0"/>
+        </Style>
     </Window.Styles>
 
-    <!-- 主布局：三段式（顶部栏 + 侧边栏 + 主内容区） -->
+    <!-- 主布局 -->
     <Grid RowDefinitions="Auto,*">
-        
+
         <!-- 顶部栏 -->
         <Border Grid.Row="0" Classes="topbar" PointerPressed="OnTopBarPointerPressed">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                
+
                 <!-- 左侧：Logo 和标题 -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" Margin="16,0,0,0">
-                    <TextBlock Text="⚡" FontSize="20" Foreground="{DynamicResource AccentBrush}"/>
+                    <TextBlock Text="{x:Static core:FluentIcons.Lightning}" FontFamily="Segoe Fluent Icons" FontSize="20" Foreground="{DynamicResource AccentBrush}"/>
                     <TextBlock Text="{Binding WindowTitle}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
-                
+
                 <!-- 中间：搜索框 -->
-                <Border Grid.Column="1" Classes="search-box" HorizontalAlignment="Center" Margin="0,8">
+                <Border Grid.Column="1" Classes="search-box" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                        <TextBlock Grid.Column="0" Text="🔍" FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1" Text="{Binding SearchQuery}" 
-                                 Watermark="搜索应用、文件或网页..."
-                                 Background="Transparent"
-                                 BorderThickness="0"
+                        <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Search}" FontFamily="Segoe Fluent Icons" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" x:Name="SearchTextBox"
+                                 Text="{Binding SearchQuery}"
+                                 Watermark="搜索应用、文件或网页... (回车搜索)"
+                                 Background="Transparent" BorderThickness="0"
                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                 FontSize="13"
-                                 VerticalAlignment="Center"/>
+                                 FontSize="12" VerticalAlignment="Center"
+                                 KeyDown="OnSearchBoxKeyDown"
+                                 GotFocus="OnSearchBoxGotFocus" LostFocus="OnSearchBoxLostFocus"/>
                         <Border Grid.Column="2" Background="{DynamicResource ShortcutKeyBackgroundBrush}" CornerRadius="4" Padding="4,2" VerticalAlignment="Center">
-                            <TextBlock Text="Ctrl+K" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="Ctrl+K" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         </Border>
                     </Grid>
                 </Border>
-                
-                <!-- 右侧：窗口控制按钮 -->
+
+                <!-- 右侧：铃铛 + 红点 + 窗口控制 -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Classes="window-control" Content="─" Command="{Binding MinimizeWindowCommand}"/>
-                    <Button Classes="window-control" Command="{Binding ToggleMaximizeCommand}">
-                        <TextBlock Text="{Binding IsMaximized, Converter={StaticResource BoolToStringConverter}, ConverterParameter='❐|'}" FontSize="10"/>
+                    <!-- 通知中心铃铛（含红点徽章） -->
+                    <Button Classes="bell-button" Command="{Binding ToggleNotificationCenterCommand}"
+                            ToolTip.Tip="消息中心">
+                        <Grid>
+                            <TextBlock Text="{x:Static core:FluentIcons.Bell}" FontFamily="Segoe Fluent Icons" FontSize="14"/>
+                            <Border Classes="red-dot"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Margin="0,2,2,0"
+                                    IsVisible="{Binding HasUnreadNotifications}"/>
+                        </Grid>
                     </Button>
-                    <Button Classes="window-control close" Content="✕" Command="{Binding CloseWindowCommand}"/>
+
+                    <!-- Win11 Fluent 窗口控制 -->
+                    <Button Classes="window-control" Command="{Binding MinimizeWindowCommand}">
+                        <TextBlock Text="{x:Static core:FluentIcons.Minimize}" FontFamily="Segoe Fluent Icons" FontSize="10"/>
+                    </Button>
+                    <Button Classes="window-control" Command="{Binding ToggleMaximizeCommand}">
+                        <TextBlock Text="{Binding MaximizeIcon}" FontFamily="Segoe Fluent Icons" FontSize="10"/>
+                    </Button>
+                    <Button Classes="window-control close" Command="{Binding CloseWindowCommand}">
+                        <TextBlock Text="{x:Static core:FluentIcons.Close}" FontFamily="Segoe Fluent Icons" FontSize="10"/>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- 主体区域：侧边栏 + 主内容区 -->
         <Grid Grid.Row="1" ColumnDefinitions="Auto,*">
-            
+
             <!-- 左侧导航栏 -->
             <Border Grid.Column="0" Width="{Binding SidebarWidth}"
                     Background="{DynamicResource SidebarBackgroundBrush}"
                     BorderBrush="{DynamicResource TopBarAccentBorderBrush}"
                     BorderThickness="0,0,2,0">
                 <Grid RowDefinitions="*,Auto,Auto">
-                    
+
                     <!-- 上方：系统导航 -->
-                    <StackPanel Grid.Row="0" VerticalAlignment="Top" Spacing="4" Margin="0,12,0,0">
-                        
-                        <!-- 折叠/展开菜单按钮 -->
+                    <StackPanel Grid.Row="0" VerticalAlignment="Top" Spacing="2" Margin="0,12,0,0">
+
                         <Button Classes="nav-button" Command="{Binding ToggleSidebarCommand}" ToolTip.Tip="折叠菜单">
-                            <TextBlock Text="☰" FontSize="18" HorizontalAlignment="Center"/>
-                        </Button>
-                        
-                        <Separator Background="{DynamicResource BorderBrush}" Margin="8,8"/>
-                        
-                        <!-- 仪表盘 -->
-                        <Button Classes="nav-button" Command="{Binding NavigateToDashboardCommand}" 
-                                ToolTip.Tip="仪表盘"
-                                IsVisible="{Binding !IsShowingPluginView}"
-                                Tag="{Binding SelectedNavIndex, Mode=OneWay}"
-                                Classes.active="{Binding SelectedNavIndex, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}">
-                            <TextBlock Text="🏠" FontSize="20" HorizontalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="{x:Static core:FluentIcons.SidebarToggle}" FontFamily="Segoe Fluent Icons" FontSize="18"/>
+                                <TextBlock Text="  折叠" Classes="nav-label" IsVisible="{Binding IsSidebarExpanded}"/>
+                            </StackPanel>
                         </Button>
 
-                        <!-- 返回按钮（仅在显示插件视图时显示） -->
+                        <Separator Background="{DynamicResource BorderBrush}" Margin="8,8"/>
+
+                        <!-- 仪表盘 -->
+                        <Button Classes="nav-button" Command="{Binding NavigateToDashboardCommand}"
+                                ToolTip.Tip="仪表盘"
+                                IsVisible="{Binding !IsShowingPluginView}"
+                                Classes.active="{Binding SelectedNavIndex, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="{x:Static core:FluentIcons.Home}" FontFamily="Segoe Fluent Icons" FontSize="20"/>
+                                <TextBlock Text="仪表盘" Classes="nav-label" IsVisible="{Binding IsSidebarExpanded}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- 返回按钮 -->
                         <Button Classes="nav-button" Command="{Binding NavigateBackToDashboardCommand}"
                                 ToolTip.Tip="返回主页"
                                 IsVisible="{Binding IsShowingPluginView}"
                                 Background="{DynamicResource NavActiveBrush}">
-                            <TextBlock Text="←" FontSize="20" HorizontalAlignment="Center" Foreground="{DynamicResource AccentBrush}"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="{x:Static core:FluentIcons.Back}" FontFamily="Segoe Fluent Icons" FontSize="20" Foreground="{DynamicResource AccentBrush}"/>
+                                <TextBlock Text="返回" Classes="nav-label" IsVisible="{Binding IsSidebarExpanded}" Foreground="{DynamicResource AccentBrush}"/>
+                            </StackPanel>
                         </Button>
 
                         <!-- 插件管理 -->
@@ -186,7 +245,21 @@
                                 ToolTip.Tip="插件管理"
                                 IsVisible="{Binding !IsShowingPluginView}"
                                 Classes.active="{Binding SelectedNavIndex, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}">
-                            <TextBlock Text="📦" FontSize="20" HorizontalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="{x:Static core:FluentIcons.Plugins}" FontFamily="Segoe Fluent Icons" FontSize="20"/>
+                                <TextBlock Text="插件" Classes="nav-label" IsVisible="{Binding IsSidebarExpanded}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- 插件市场 -->
+                        <Button Classes="nav-button" Command="{Binding NavigateToPluginMarketCommand}"
+                                ToolTip.Tip="插件市场"
+                                IsVisible="{Binding !IsShowingPluginView}"
+                                Classes.active="{Binding SelectedNavIndex, Converter={StaticResource IntToBoolConverter}, ConverterParameter=4}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="{x:Static core:FluentIcons.Marketplace}" FontFamily="Segoe Fluent Icons" FontSize="20"/>
+                                <TextBlock Text="市场" Classes="nav-label" IsVisible="{Binding IsSidebarExpanded}"/>
+                            </StackPanel>
                         </Button>
 
                         <!-- 设置 -->
@@ -194,12 +267,26 @@
                                 ToolTip.Tip="设置"
                                 IsVisible="{Binding !IsShowingPluginView}"
                                 Classes.active="{Binding SelectedNavIndex, Converter={StaticResource IntToBoolConverter}, ConverterParameter=2}">
-                            <TextBlock Text="⚙️" FontSize="20" HorizontalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="{x:Static core:FluentIcons.Settings}" FontFamily="Segoe Fluent Icons" FontSize="20"/>
+                                <TextBlock Text="设置" Classes="nav-label" IsVisible="{Binding IsSidebarExpanded}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- 日志 -->
+                        <Button Classes="nav-button" Command="{Binding NavigateToLogsPageCommand}"
+                                ToolTip.Tip="消息日志"
+                                IsVisible="{Binding !IsShowingPluginView}"
+                                Classes.active="{Binding SelectedNavIndex, Converter={StaticResource IntToBoolConverter}, ConverterParameter=3}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="{x:Static core:FluentIcons.Logs}" FontFamily="Segoe Fluent Icons" FontSize="20"/>
+                                <TextBlock Text="日志" Classes="nav-label" IsVisible="{Binding IsSidebarExpanded}"/>
+                            </StackPanel>
                         </Button>
                     </StackPanel>
-                    
-                    <!-- 中间：可拖拽分隔线 -->
-                    <GridSplitter Grid.Row="1" Height="4" 
+
+                    <!-- 分隔线 -->
+                    <GridSplitter Grid.Row="1" Height="4"
                                   Background="{DynamicResource BorderBrush}"
                                   HorizontalAlignment="Stretch"
                                   VerticalAlignment="Center"
@@ -211,18 +298,23 @@
                             </Style>
                         </GridSplitter.Styles>
                     </GridSplitter>
-                    
-                    <!-- 下方：插件列表 -->
+
+                    <!-- 运行中的插件列表 -->
                     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" MinHeight="50"
                                   IsVisible="{Binding RunningPlugins.Count, Converter={StaticResource IntToBoolConverter}}">
                         <ItemsControl ItemsSource="{Binding RunningPlugins}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Classes="nav-button" 
+                                    <Button Classes="nav-button"
                                             Command="{Binding $parent[Window].DataContext.NavigateToPluginCommand}"
                                             CommandParameter="{Binding Id}"
                                             ToolTip.Tip="{Binding Name}">
-                                        <TextBlock Text="🔌" FontSize="20" HorizontalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding Id, Converter={StaticResource PluginIconConverter}}"
+                                                       FontFamily="Segoe Fluent Icons" FontSize="18"/>
+                                            <TextBlock Text="{Binding Name}" Classes="nav-label"
+                                                       IsVisible="{Binding $parent[Window].DataContext.IsSidebarExpanded}"/>
+                                        </StackPanel>
                                     </Button>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -232,19 +324,65 @@
             </Border>
 
             <!-- 主内容区域 -->
-            <Grid Grid.Column="1" Background="{DynamicResource WindowBackgroundBrush}">
+            <Grid Grid.Column="1" Background="{DynamicResource WindowBackgroundBrush}"
+                  PointerPressed="OnContentAreaPressed">
                 <ContentControl Content="{Binding CurrentPage}"/>
-                
-                <!-- 通知区域 -->
-                <Border HorizontalAlignment="Right" VerticalAlignment="Top" 
+
+                <!-- 搜索历史浮层（最顶层） -->
+                <Border IsVisible="{Binding ShowSearchHistory}"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="6"
+                        BoxShadow="0 4 16 0 #33000000"
+                        Width="320" HorizontalAlignment="Center"
+                        VerticalAlignment="Top" Margin="0,8,0,0"
+                        ZIndex="999" IsHitTestVisible="True">
+                    <StackPanel>
+                        <ItemsControl ItemsSource="{Binding SearchHistoryItems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="10,8" Cursor="Hand"
+                                            Background="Transparent"
+                                            PointerPressed="OnSearchHistoryItemPressed">
+                                        <Border.Styles>
+                                            <Style Selector="Border:pointerover">
+                                                <Setter Property="Background" Value="{DynamicResource NavHoverBrush}"/>
+                                            </Style>
+                                        </Border.Styles>
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                            <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Logs}"
+                                                       FontFamily="Segoe Fluent Icons" FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding}" FontSize="13"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                                Padding="8,4" HorizontalAlignment="Right">
+                            <Button Background="Transparent" BorderThickness="0" Padding="4"
+                                    Command="{Binding ClearSearchHistoryCommand}">
+                                <TextBlock Text="清除历史" FontSize="11"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            </Button>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Toast 通知叠加层 -->
+                <Border HorizontalAlignment="Right" VerticalAlignment="Top"
                         Margin="0,20,20,0" Width="350" MaxHeight="400"
                         IsHitTestVisible="False">
-                    <ItemsControl ItemsSource="{Binding Notifications}" 
+                    <ItemsControl ItemsSource="{Binding Notifications}"
                                   x:DataType="vm:MainWindowViewModel"
                                   HorizontalAlignment="Right">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:NotificationMessage">
-                                <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="6" 
+                                <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="6"
                                         BoxShadow="0 4 12 0 #33000000"
                                         Margin="0,0,0,10" Padding="15"
                                         BorderThickness="3,0,0,0"
@@ -252,22 +390,123 @@
                                         IsHitTestVisible="True">
                                     <StackPanel Spacing="8">
                                         <StackPanel Orientation="Horizontal" Spacing="10">
-                                            <TextBlock Text="{Binding Icon}" FontSize="18"/>
-                                            <TextBlock Text="{Binding Message}" 
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" 
-                                                       FontSize="13"
-                                                       TextWrapping="Wrap"
+                                            <TextBlock Text="{Binding Icon}" FontFamily="Segoe Fluent Icons" FontSize="18" Foreground="{Binding Color}"/>
+                                            <TextBlock Text="{Binding Message}"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       FontSize="13" TextWrapping="Wrap"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding Timestamp, StringFormat='HH:mm:ss'}" 
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" 
-                                                   FontSize="11"
-                                                   HorizontalAlignment="Right"/>
+                                        <TextBlock Text="{Binding Timestamp, StringFormat='HH:mm:ss'}"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   FontSize="11" HorizontalAlignment="Right"/>
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                </Border>
+
+                <!-- 通知中心弹出面板 -->
+                <Border IsVisible="{Binding IsNotificationCenterOpen}"
+                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Margin="0,56,12,0" Width="380" MaxHeight="500"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        CornerRadius="8"
+                        BoxShadow="0 8 32 0 #66000000"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        ZIndex="100"
+                        IsHitTestVisible="True">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <!-- 头部 -->
+                        <Border Grid.Row="0" Padding="20,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel>
+                                    <TextBlock Text="消息中心" FontSize="16" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding NotificationSummary}" FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Background="Transparent" BorderThickness="0"
+                                        Foreground="{DynamicResource TextSecondaryBrush}"
+                                        Width="32" Height="32" CornerRadius="4"
+                                        Command="{Binding ToggleNotificationCenterCommand}">
+                                    <TextBlock Text="{x:Static core:FluentIcons.Close}" FontFamily="Segoe Fluent Icons" FontSize="12"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- 列表 -->
+                        <ScrollViewer Grid.Row="1" Margin="8,4">
+                            <StackPanel Spacing="2">
+                                <ItemsControl ItemsSource="{Binding NotificationHistory}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="12,10" CornerRadius="6"
+                                                    Background="Transparent"
+                                                    Cursor="Hand"
+                                                    PointerPressed="OnNotificationHistoryItemPressed">
+                                                <Border.Styles>
+                                                    <Style Selector="Border:pointerover">
+                                                        <Setter Property="Background" Value="{DynamicResource NavHoverBrush}"/>
+                                                    </Style>
+                                                </Border.Styles>
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                    <TextBlock Grid.Column="0" FontFamily="Segoe Fluent Icons" FontSize="16"
+                                                               VerticalAlignment="Center" Width="24"/>
+                                                    <StackPanel Grid.Column="1">
+                                                        <TextBlock Text="{Binding Message}" FontSize="13"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   TextWrapping="Wrap" MaxHeight="40"/>
+                                                        <TextBlock Text="{Binding Timestamp, StringFormat='yyyy-MM-dd HH:mm:ss'}"
+                                                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Margin="0,2,0,0"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- 空状态 -->
+                                <Border Padding="40">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="10">
+                                        <TextBlock Text="{x:Static core:FluentIcons.CheckmarkCircle}"
+                                                   FontFamily="Segoe Fluent Icons" FontSize="32"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="暂无消息" FontSize="14"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- 底部操作 -->
+                        <Border Grid.Row="2" Padding="16,12"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                <Button Padding="12,6"
+                                        Background="Transparent"
+                                        Foreground="{DynamicResource TextSecondaryBrush}"
+                                        CornerRadius="6" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                        Command="{Binding ClearNotificationsCommand}">
+                                    <TextBlock Text="清除全部"/>
+                                </Button>
+                                <Button Padding="12,6"
+                                        Background="{DynamicResource AccentBrush}" Foreground="White"
+                                        CornerRadius="6" BorderThickness="0"
+                                        Command="{Binding NavigateToLogsCommand}">
+                                    <TextBlock Text="查看日志"/>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </Border>
             </Grid>
         </Grid>

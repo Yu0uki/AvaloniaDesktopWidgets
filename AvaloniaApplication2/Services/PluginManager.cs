@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using AvaloniaApplication2.Core;
 using AvaloniaApplication2.Models;
 using AvaloniaApplication2.Infrastructure;
@@ -36,11 +37,27 @@ namespace AvaloniaApplication2.Services
         private readonly SettingsService _settingsService;
         private readonly NotificationService _notificationService;
         private readonly ILogger _logger;
+        private FileSystemWatcher? _folderWatcher;
+        private readonly HashSet<string> _pendingOps = new();
+        private readonly object _lock = new();
 
         public ObservableCollection<PluginInfo> PluginInfos => _pluginInfos;
 
+        public string PluginsDirectory => _pluginsDirectory;
+
         // 插件状态改变事件
         public event Action<string, PluginStateChange>? PluginStateChanged;
+
+        /// <summary>
+        /// 确保操作在 UI 线程执行（ObservableCollection 非线程安全）
+        /// </summary>
+        private void RunOnUI(Action action)
+        {
+            if (Dispatcher.UIThread.CheckAccess())
+                action();
+            else
+                Dispatcher.UIThread.Post(action);
+        }
 
         public PluginManager(SettingsService settingsService, NotificationService? notificationService = null)
         {
@@ -92,6 +109,173 @@ namespace AvaloniaApplication2.Services
             {
                 _logger.Information("插件目录已存在: {Path}", _pluginsDirectory);
             }
+
+            // 启动 Plugins 文件夹热重载监视
+            StartFolderWatcher();
+        }
+
+        /// <summary>
+        /// 启动 Plugins 文件夹监视（新增/删除/改名）
+        /// </summary>
+        private void StartFolderWatcher()
+        {
+            try
+            {
+                _folderWatcher = new FileSystemWatcher(_pluginsDirectory, "*.dll")
+                {
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
+                    EnableRaisingEvents = true
+                };
+
+                _folderWatcher.Created += async (sender, e) =>
+                {
+                    await System.Threading.Tasks.Task.Delay(600);
+                    await OnPluginFileCreatedAsync(e.FullPath);
+                };
+
+                _folderWatcher.Deleted += (sender, e) =>
+                {
+                    OnPluginFileDeleted(e.FullPath);
+                };
+
+                _folderWatcher.Renamed += (sender, e) =>
+                {
+                    OnPluginFileDeleted(e.OldFullPath);
+                    _ = OnPluginFileCreatedAsync(e.FullPath);
+                };
+
+                _folderWatcher.Changed += async (sender, e) =>
+                {
+                    await System.Threading.Tasks.Task.Delay(600);
+                    await OnPluginFileCreatedAsync(e.FullPath);
+                };
+
+                _logger.Information("Plugins 文件夹热重载监视已启动: {Path}", _pluginsDirectory);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "启动文件夹监视失败");
+            }
+        }
+
+        /// <summary>
+        /// 新 DLL 创建时自动加载
+        /// </summary>
+        private async System.Threading.Tasks.Task OnPluginFileCreatedAsync(string filePath)
+        {
+            filePath = Path.GetFullPath(filePath);
+            if (!File.Exists(filePath)) return;
+
+            lock (_lock)
+            {
+                if (_pendingOps.Contains(filePath)) return;
+                if (_pluginInfos.Any(p =>
+                    string.Equals(p.DllPath, filePath, StringComparison.OrdinalIgnoreCase)))
+                    return;
+                _pendingOps.Add(filePath);
+            }
+
+            try
+            {
+                _logger.Information("检测到插件 DLL: {Path}", filePath);
+                _notificationService.ShowInfo($"检测到插件: {Path.GetFileName(filePath)}");
+
+                var plugin = await LoadPluginAsync(filePath);
+                if (plugin != null)
+                {
+                    _notificationService.ShowSuccess($"插件已加载: {plugin.Name} v{plugin.Version}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "自动加载失败: {Path}", filePath);
+            }
+            finally
+            {
+                lock (_lock) { _pendingOps.Remove(filePath); }
+            }
+        }
+
+        /// <summary>
+        /// DLL 被删除时自动卸载对应插件
+        /// </summary>
+        private void OnPluginFileDeleted(string filePath)
+        {
+            filePath = Path.GetFullPath(filePath);
+            lock (_lock)
+            {
+                if (_pendingOps.Contains(filePath)) return;
+                _pendingOps.Add(filePath);
+            }
+
+            try
+            {
+                // 通过 DLL 路径匹配查找被删除的插件
+                var pluginInfo = _pluginInfos.FirstOrDefault(p =>
+                    string.Equals(p.DllPath, filePath, StringComparison.OrdinalIgnoreCase));
+
+                if (pluginInfo != null)
+                {
+                    var name = pluginInfo.Name;
+                    _logger.Information("检测到插件 DLL 已删除: {Path}, 卸载插件 {PluginId}", filePath, pluginInfo.Id);
+                    UnloadPlugin(pluginInfo.Id);
+                    _notificationService.ShowInfo($"插件已自动卸载: {name}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "自动卸载失败: {Path}", filePath);
+            }
+            finally
+            {
+                lock (_lock) { _pendingOps.Remove(filePath); }
+            }
+        }
+
+        /// <summary>
+        /// 手动同步：扫描 ./Plugins 文件夹，加载新 DLL，移除已删除的插件
+        /// </summary>
+        public async Task SyncPluginsFromFolderAsync()
+        {
+            if (!Directory.Exists(_pluginsDirectory))
+            {
+                _logger.Warning("插件目录不存在: {Path}", _pluginsDirectory);
+                return;
+            }
+
+            var dllFiles = Directory.GetFiles(_pluginsDirectory, "*.dll", SearchOption.TopDirectoryOnly);
+            _logger.Information("同步插件: 文件夹中有 {Count} 个 DLL", dllFiles.Length);
+
+            // 1. 移除 DLL 文件已不存在的插件
+            var toRemove = _pluginInfos
+                .Where(p => !dllFiles.Any(f =>
+                    string.Equals(f, p.DllPath, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            foreach (var info in toRemove)
+            {
+                _logger.Information("同步移除无效插件: {Id} ({DllPath})", info.Id, info.DllPath);
+                UnloadPlugin(info.Id);
+            }
+
+            // 2. 加载新 DLL
+            foreach (var dllFile in dllFiles)
+            {
+                if (_pluginInfos.Any(p =>
+                    string.Equals(p.DllPath, dllFile, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
+                try
+                {
+                    await LoadPluginAsync(dllFile);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "同步加载插件失败: {Path}", dllFile);
+                }
+            }
+
+            _notificationService.ShowSuccess($"插件同步完成: {_pluginInfos.Count(p => p.IsLoaded)} 个已加载");
         }
 
         /// <summary>
@@ -122,51 +306,111 @@ namespace AvaloniaApplication2.Services
         }
 
         /// <summary>
-        /// 加载单个插件
+        /// 加载单个插件（基于 DLL 路径和插件 ID 去重）
         /// </summary>
         public async Task<IPlugin?> LoadPluginAsync(string dllPath)
         {
             if (!File.Exists(dllPath))
             {
-                _logger.Warning("插件文件不存在: {Path}", dllPath);
-                throw new FileNotFoundException("插件文件不存在", dllPath);
+                var msg = $"文件不存在: {Path.GetFileName(dllPath)}";
+                _logger.Warning("插件加载失败: {Msg}", msg);
+                _notificationService.ShowError($"插件加载失败: {msg}");
+                return null;
+            }
+
+            // 规范化路径，确保与文件夹监视器路径一致
+            dllPath = Path.GetFullPath(dllPath);
+
+            // 去重：已加载过的 DLL 路径不重复加载
+            lock (_lock)
+            {
+                if (_pluginInfos.Any(p =>
+                    string.Equals(p.DllPath, dllPath, StringComparison.OrdinalIgnoreCase)))
+                {
+                    var msg = $"插件已安装，跳过重复加载: {Path.GetFileName(dllPath)}";
+                    _logger.Information(msg);
+                    _notificationService.ShowWarning(msg);
+                    return null;
+                }
             }
 
             try
             {
                 _logger.Information("开始加载插件: {Path}", dllPath);
-                
+
                 // 创建隔离的加载上下文
                 var context = new PluginLoadContext(dllPath);
-                var assembly = context.LoadFromAssemblyPath(Path.GetFullPath(dllPath));
+                Assembly assembly;
+                try
+                {
+                    assembly = context.LoadFromAssemblyPath(Path.GetFullPath(dllPath));
+                }
+                catch (Exception ex)
+                {
+                    var msg = $"DLL 加载失败（可能损坏或依赖缺失）: {Path.GetFileName(dllPath)}";
+                    _logger.Error(ex, msg);
+                    _notificationService.ShowError(msg);
+                    throw;
+                }
 
                 // 查找实现 IPlugin 接口的类型
                 var pluginType = assembly.GetTypes()
                     .FirstOrDefault(t => typeof(IPlugin).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface);
 
                 if (pluginType == null)
-                    throw new Exception("未找到实现 IPlugin 接口的类型");
+                {
+                    var msg = $"非有效插件 DLL（未实现 IPlugin）: {Path.GetFileName(dllPath)}";
+                    _logger.Error(msg);
+                    _notificationService.ShowError(msg);
+                    throw new InvalidOperationException(msg);
+                }
 
                 // 实例化插件
-                var plugin = (IPlugin?)Activator.CreateInstance(pluginType);
+                IPlugin? plugin;
+                try
+                {
+                    plugin = (IPlugin?)Activator.CreateInstance(pluginType);
+                }
+                catch (Exception ex)
+                {
+                    var msg = $"插件实例化失败: {Path.GetFileName(dllPath)}";
+                    _logger.Error(ex, msg);
+                    _notificationService.ShowError(msg);
+                    throw;
+                }
+
                 if (plugin == null)
-                    throw new Exception("无法创建插件实例");
+                {
+                    var msg = $"无法创建插件实例: {Path.GetFileName(dllPath)}";
+                    _logger.Error(msg);
+                    _notificationService.ShowError(msg);
+                    throw new InvalidOperationException(msg);
+                }
 
                 // 初始化插件
                 plugin.Initialize();
+
+                // 去重：相同 ID 的插件已存在则跳过
+                if (_loadedPlugins.ContainsKey(plugin.Id))
+                {
+                    var msg = $"插件 ID 冲突，已存在同 ID 插件: {plugin.Id} ({Path.GetFileName(dllPath)})";
+                    _logger.Warning(msg);
+                    _notificationService.ShowError(msg);
+                    return null;
+                }
 
                 // 存储插件和上下文
                 _loadedPlugins[plugin.Id] = plugin;
                 _pluginContexts[plugin.Id] = context;
 
-                // 创建插件信息
+                // 创建插件信息（Author 统一为 Efficiency Workshop Team）
                 var pluginInfo = new PluginInfo
                 {
                     Id = plugin.Id,
                     Name = plugin.Name,
                     Version = plugin.Version,
                     Description = plugin.Description,
-                    Author = plugin.Author,
+                    Author = "Efficiency Workshop Team",
                     DllPath = dllPath,
                     IsEnabled = true,
                     IsRunning = true,
@@ -174,7 +418,7 @@ namespace AvaloniaApplication2.Services
                     InstalledDate = DateTime.Now
                 };
 
-                _pluginInfos.Add(pluginInfo);
+                RunOnUI(() => _pluginInfos.Add(pluginInfo));
 
                 // 更新设置
                 if (!_settingsService.Settings.EnabledPlugins.Contains(plugin.Id))
@@ -192,7 +436,10 @@ namespace AvaloniaApplication2.Services
                 {
                     hotReloadManager.StartWatching(plugin.Id, dllPath);
                 }
-                
+
+                // 插件加载后自动启动，通知侧边栏显示
+                PluginStateChanged?.Invoke(plugin.Id, PluginStateChange.Started);
+
                 return plugin;
             }
             catch (Exception ex)
@@ -206,8 +453,8 @@ namespace AvaloniaApplication2.Services
                     IsLoaded = false,
                     Error = ex.Message
                 };
-                _pluginInfos.Add(errorInfo);
-                
+                RunOnUI(() => _pluginInfos.Add(errorInfo));
+
                 _logger.Error(ex, "加载插件失败: {Path}", dllPath);
                 _notificationService.ShowError($"加载插件失败: {ex.Message}");
                 return null;
@@ -215,46 +462,55 @@ namespace AvaloniaApplication2.Services
         }
 
         /// <summary>
-        /// 卸载插件
+        /// 卸载插件（清理 PluginInfo、已加载实例、上下文，无论是否加载成功）
         /// </summary>
         public void UnloadPlugin(string pluginId)
         {
+            RunOnUI(() =>
+            {
+                var pluginInfo = _pluginInfos.FirstOrDefault(p => p.Id == pluginId);
+                if (pluginInfo != null)
+                {
+                    _pluginInfos.Remove(pluginInfo);
+                }
+            });
+
+            // 2. 如果有已加载的插件实例
             if (_loadedPlugins.TryGetValue(pluginId, out var plugin))
             {
                 try
                 {
                     _logger.Information("开始卸载插件: {PluginId}", pluginId);
-                    
-                    // 停止热重载监视
+
                     var hotReloadManager = DependencyInjection.ServiceContainer.GetService<PluginHotReloadManager>();
-                    if (hotReloadManager != null)
+                    hotReloadManager?.StopWatching(pluginId);
+
+                    // P0: try-catch 包裹 Shutdown，防止一个插件失败阻塞卸载
+                    try
                     {
-                        hotReloadManager.StopWatching(pluginId);
+                        plugin.Shutdown();
                     }
-                    
-                    plugin.Shutdown();
-                    
-                    // 从集合中移除
-                    _loadedPlugins.Remove(pluginId);
-                    
-                    var pluginInfo = _pluginInfos.FirstOrDefault(p => p.Id == pluginId);
-                    if (pluginInfo != null)
+                    catch (Exception ex)
                     {
-                        _pluginInfos.Remove(pluginInfo);
+                        _logger.Error(ex, "插件 Shutdown 失败: {PluginId}", pluginId);
                     }
 
-                    // 卸载加载上下文
+                    _loadedPlugins.Remove(pluginId);
+
                     if (_pluginContexts.TryGetValue(pluginId, out var context))
                     {
                         context.Unload();
                         _pluginContexts.Remove(pluginId);
+
+                        // P0: 触发 GC 回收 AssemblyLoadContext
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
                     }
-                    
-                    // 触发状态改变事件
+
                     PluginStateChanged?.Invoke(pluginId, PluginStateChange.Unloaded);
 
                     _logger.Information("插件已卸载: {PluginId}", pluginId);
-                    _notificationService.ShowInfo($"插件已卸载: {pluginId}");
+                    _notificationService.ShowInfo($"插件已卸载: {plugin.Name}");
                 }
                 catch (Exception ex)
                 {
@@ -366,6 +622,20 @@ namespace AvaloniaApplication2.Services
         }
 
         /// <summary>
+        /// 停止文件夹监视
+        /// </summary>
+        public void StopFolderWatcher()
+        {
+            if (_folderWatcher != null)
+            {
+                _folderWatcher.EnableRaisingEvents = false;
+                _folderWatcher.Dispose();
+                _folderWatcher = null;
+                _logger.Information("已停止 Plugins 文件夹监视");
+            }
+        }
+
+        /// <summary>
         /// 激活插件
         /// </summary>
         public void ActivatePlugin(string pluginId)
@@ -395,26 +665,35 @@ namespace AvaloniaApplication2.Services
         }
 
         /// <summary>
-        /// 删除插件文件
+        /// 删除插件：移动到回收站而非永久删除
         /// </summary>
         public async Task DeletePluginAsync(string pluginId)
         {
-            // 先卸载插件
+            // 先保存 DLL 路径（UnloadPlugin 会从 _pluginInfos 中移除）
+            var pluginInfo = _pluginInfos.FirstOrDefault(p => p.Id == pluginId);
+            var dllPath = pluginInfo?.DllPath;
+
+            // 卸载插件（会清理 _pluginInfos、_loadedPlugins、_pluginContexts）
             UnloadPlugin(pluginId);
 
-            var pluginInfo = _pluginInfos.FirstOrDefault(p => p.Id == pluginId);
-            if (pluginInfo != null && File.Exists(pluginInfo.DllPath))
+            if (dllPath != null && File.Exists(dllPath))
             {
                 try
                 {
-                    File.Delete(pluginInfo.DllPath);
-                    _pluginInfos.Remove(pluginInfo);
-                    
+                    var recycleDir = Path.Combine(_pluginsDirectory, ".recycle");
+                    Directory.CreateDirectory(recycleDir);
+
+                    var fileName = Path.GetFileName(dllPath);
+                    var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                    var destPath = Path.Combine(recycleDir, $"{timestamp}_{fileName}");
+
+                    File.Move(dllPath, destPath);
+
                     _settingsService.Settings.EnabledPlugins.Remove(pluginId);
                     await _settingsService.SaveSettingsAsync();
-                    
-                    _logger.Information("插件已删除: {PluginId}", pluginId);
-                    _notificationService.ShowSuccess($"插件已删除: {pluginId}");
+
+                    _logger.Information("插件已移至回收站: {PluginId} -> {Path}", pluginId, destPath);
+                    _notificationService.ShowSuccess($"插件已移至回收站: {pluginId}");
                 }
                 catch (Exception ex)
                 {
@@ -422,6 +701,57 @@ namespace AvaloniaApplication2.Services
                     throw;
                 }
             }
+        }
+
+        /// <summary>
+        /// 获取回收站中的文件列表
+        /// </summary>
+        public string[] GetRecycleBinItems()
+        {
+            var recycleDir = Path.Combine(_pluginsDirectory, ".recycle");
+            if (!Directory.Exists(recycleDir)) return Array.Empty<string>();
+            return Directory.GetFiles(recycleDir, "*.dll", SearchOption.TopDirectoryOnly);
+        }
+
+        /// <summary>
+        /// 从回收站恢复插件
+        /// </summary>
+        public async Task<bool> RestoreFromRecycleBinAsync(string recycleFilePath)
+        {
+            if (!File.Exists(recycleFilePath)) return false;
+
+            var fileName = Path.GetFileName(recycleFilePath);
+            // 文件名格式: yyyyMMdd_HHmmss_originalName.dll (前缀固定16字符)
+            var originalName = fileName.Length > 16 ? fileName[16..] : fileName;
+            var destPath = Path.Combine(_pluginsDirectory, originalName);
+
+            if (File.Exists(destPath))
+            {
+                _notificationService.ShowWarning($"同名 DLL 已存在: {originalName}");
+                return false;
+            }
+
+            File.Move(recycleFilePath, destPath);
+            _notificationService.ShowInfo($"已从回收站恢复: {originalName}");
+            await LoadPluginAsync(destPath);
+            return true;
+        }
+
+        /// <summary>
+        /// 清空回收站
+        /// </summary>
+        public void EmptyRecycleBin()
+        {
+            var recycleDir = Path.Combine(_pluginsDirectory, ".recycle");
+            if (!Directory.Exists(recycleDir)) return;
+
+            foreach (var file in Directory.GetFiles(recycleDir, "*", SearchOption.AllDirectories))
+            {
+                try { File.Delete(file); }
+                catch (Exception ex) { _logger.Error(ex, "清空回收站失败: {File}", file); }
+            }
+
+            _notificationService.ShowInfo("回收站已清空");
         }
     }
 }

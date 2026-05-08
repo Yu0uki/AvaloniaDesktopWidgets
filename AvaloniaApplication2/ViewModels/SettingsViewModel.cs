@@ -1,7 +1,9 @@
+using AvaloniaApplication2.Models;
 using AvaloniaApplication2.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -15,7 +17,7 @@ namespace AvaloniaApplication2.ViewModels
         private readonly SettingsService _settingsService;
 
         [ObservableProperty]
-        private int selectedThemeIndex = 1; // 0=Dark, 1=Light, 2=System
+        private int selectedThemeIndex = 1;
 
         [ObservableProperty]
         private bool autoLoadPlugins;
@@ -24,7 +26,7 @@ namespace AvaloniaApplication2.ViewModels
         private string pluginsDirectory;
 
         [ObservableProperty]
-        private string appVersion = "1.0.0";
+        private string appVersion = "5.0.1";
 
         [ObservableProperty]
         private string statusMessage = "";
@@ -32,54 +34,63 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty]
         private int selectedSettingsTab;
 
-        // 启动页面
         [ObservableProperty]
         private int defaultStartupPageIndex;
 
-        // 语言 (0=Auto, 1=简体中文, 2=English)
         [ObservableProperty]
         private int languageIndex = 1;
 
-        // 主题色 (0=默认蓝, 1=翠绿, 2=紫色, 3=橙色, 4=红色)
         [ObservableProperty]
         private int accentColorIndex;
 
-        // 背景不透明度
         [ObservableProperty]
         private double backgroundOpacity = 85;
 
-        // 自定义背景图片
         [ObservableProperty]
         private bool customBackgroundImage;
 
-        // 背景图片路径
         [ObservableProperty]
         private string backgroundImagePath = "";
 
-        // 缓存目录
         [ObservableProperty]
-        private string cacheDirectory = System.IO.Path.Combine(System.AppContext.BaseDirectory, "appdata");
+        private string cacheDirectory = System.IO.Path.Combine(AppContext.BaseDirectory, "appdata");
 
-        // 预设主题色
+        [ObservableProperty]
+        private string pluginMarketUrl = "";
+
+        // 用户数据文件列表
+        public ObservableCollection<UserDataFileInfo> UserDataFiles { get; } = new();
+
+        // 搜索历史
+        [ObservableProperty] private bool enableSearchHistory = true;
+
+        // 设置同步
+        [ObservableProperty] private bool syncEnabled;
+        [ObservableProperty] private bool autoSync;
+        [ObservableProperty] private string syncRepoOwner = "";
+        [ObservableProperty] private string syncRepoName = "";
+        [ObservableProperty] private string syncToken = "";
+        [ObservableProperty] private string syncBranch = "main";
+        [ObservableProperty] private string? lastSyncTime;
+
         private static readonly Color[] AccentColors = new[]
         {
-            Color.FromRgb(0, 103, 192),    // 默认蓝
-            Color.FromRgb(16, 137, 62),     // 翠绿
-            Color.FromRgb(136, 23, 152),    // 紫色
-            Color.FromRgb(210, 75, 0),      // 橙色
-            Color.FromRgb(197, 0, 47),      // 红色
+            Color.FromRgb(0, 103, 192),
+            Color.FromRgb(16, 137, 62),
+            Color.FromRgb(136, 23, 152),
+            Color.FromRgb(210, 75, 0),
+            Color.FromRgb(197, 0, 47),
         };
 
         public SettingsViewModel(SettingsService settingsService)
         {
             _settingsService = settingsService;
 
-            // 加载当前设置
             SelectedThemeIndex = settingsService.Settings.Theme.ToLower() switch
             {
                 "dark" => 0,
                 "system" => 2,
-                _ => 1 // light (默认浅色)
+                _ => 1
             };
             AutoLoadPlugins = settingsService.Settings.AutoLoadPlugins;
             PluginsDirectory = settingsService.Settings.PluginsDirectory;
@@ -89,8 +100,16 @@ namespace AvaloniaApplication2.ViewModels
             CustomBackgroundImage = settingsService.Settings.CustomBackgroundImage;
             BackgroundImagePath = settingsService.Settings.BackgroundImagePath;
             DefaultStartupPageIndex = settingsService.Settings.DefaultStartupPageIndex;
+            PluginMarketUrl = settingsService.Settings.PluginMarketUrl;
+            SyncEnabled = settingsService.Settings.SyncEnabled;
+            AutoSync = settingsService.Settings.AutoSync;
+            SyncRepoOwner = settingsService.Settings.SyncRepoOwner;
+            SyncRepoName = settingsService.Settings.SyncRepoName;
+            SyncToken = settingsService.Settings.SyncToken;
+            SyncBranch = string.IsNullOrEmpty(settingsService.Settings.SyncBranch) ? "main" : settingsService.Settings.SyncBranch;
+            LastSyncTime = settingsService.Settings.LastSyncTime;
+            EnableSearchHistory = settingsService.Settings.EnableSearchHistory;
 
-            // 应用已保存的主题色和背景透明度
             if (AccentColorIndex >= 0 && AccentColorIndex < AccentColors.Length)
             {
                 ApplyAccentColor();
@@ -120,6 +139,7 @@ namespace AvaloniaApplication2.ViewModels
             await _settingsService.UpdateThemeAsync(themeValue);
             ApplyTheme(themeValue);
             StatusMessage = $"主题已切换为: {themeValue}";
+            NotificationService.Instance.ShowInfo($"主题切换: {themeValue}");
         }
 
         private void ApplyTheme(string theme)
@@ -153,22 +173,18 @@ namespace AvaloniaApplication2.ViewModels
             var color = AccentColors[AccentColorIndex];
             var brush = new SolidColorBrush(color);
 
-            // 生成浅色变体（用于背景色，如 hover/active 状态）
             var lightColor = Color.FromRgb(
                 (byte)Math.Min(255, color.R + 160),
                 (byte)Math.Min(255, color.G + 160),
                 (byte)Math.Min(255, color.B + 160));
             var lightBrush = new SolidColorBrush(lightColor);
 
-            // 顶部栏主题色底色（非常淡，约10%透明度）
             var topBarTintColor = Color.FromArgb(25, color.R, color.G, color.B);
             var topBarTintBrush = new SolidColorBrush(topBarTintColor);
 
-            // 侧边栏主题色底色
             var sidebarTintColor = Color.FromArgb(18, color.R, color.G, color.B);
             var sidebarTintBrush = new SolidColorBrush(sidebarTintColor);
 
-            // 更新全局资源
             App.Current.Resources["AccentBrush"] = brush;
             App.Current.Resources["AccentColor"] = color;
             App.Current.Resources["NavActiveBrush"] = lightBrush;
@@ -218,15 +234,13 @@ namespace AvaloniaApplication2.ViewModels
                 return;
             }
 
-            // 移除应用层覆盖以获取当前主题的原始背景色
             App.Current.Resources.Remove("WindowBackgroundBrush");
             var bgBrush = App.Current.Resources["WindowBackgroundBrush"] as SolidColorBrush;
             if (bgBrush == null) return;
 
             var opacity = BackgroundOpacity / 100.0;
-            if (opacity >= 1.0) return; // 完全不需要调整
+            if (opacity >= 1.0) return;
 
-            // 基于当前主题背景色创建带透明度的版本
             var adjustedColor = Color.FromArgb(
                 (byte)(255 * opacity),
                 bgBrush.Color.R, bgBrush.Color.G, bgBrush.Color.B);
@@ -240,7 +254,6 @@ namespace AvaloniaApplication2.ViewModels
             _ = _settingsService.UpdateCustomBackgroundImageAsync(value);
             if (!value && App.Current != null)
             {
-                // 移除应用层覆盖，让 ThemeDictionary 的背景生效
                 App.Current.Resources.Remove("WindowBackgroundBrush");
                 ApplyBackgroundOpacity();
             }
@@ -277,7 +290,7 @@ namespace AvaloniaApplication2.ViewModels
                     }
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 StatusMessage = $"选择图片失败: {ex.Message}";
             }
@@ -301,10 +314,63 @@ namespace AvaloniaApplication2.ViewModels
                 }
                 catch
                 {
-                    // 图片加载失败
                 }
             }
         }
+
+        // ===== 设置同步 =====
+
+        [RelayCommand]
+        private async Task SaveSyncSettingsAsync()
+        {
+            var s = _settingsService.Settings;
+            s.SyncEnabled = SyncEnabled;
+            s.AutoSync = AutoSync;
+            s.SyncRepoOwner = SyncRepoOwner.Trim();
+            s.SyncRepoName = SyncRepoName.Trim();
+            s.SyncToken = SyncToken.Trim();
+            s.SyncBranch = string.IsNullOrWhiteSpace(SyncBranch) ? "main" : SyncBranch.Trim();
+            await _settingsService.SaveSettingsAsync();
+            LastSyncTime = s.LastSyncTime;
+            StatusMessage = "同步设置已保存";
+        }
+
+        [RelayCommand]
+        private async Task SyncNowAsync()
+        {
+            await SaveSyncSettingsAsync();
+            var syncService = DependencyInjection.ServiceContainer.GetService<SettingsSyncService>();
+            if (syncService == null)
+            {
+                StatusMessage = "同步服务不可用";
+                return;
+            }
+            StatusMessage = "正在同步...";
+            LastSyncTime = await syncService.SyncAsync();
+            StatusMessage = LastSyncTime;
+        }
+
+        // 市场URL变更自动保存
+        partial void OnPluginMarketUrlChanged(string value)
+        {
+            _settingsService.Settings.PluginMarketUrl = value;
+            _ = _settingsService.SaveSettingsAsync();
+        }
+
+        // 搜索历史自动保存
+        partial void OnEnableSearchHistoryChanged(bool value)
+        {
+            _settingsService.Settings.EnableSearchHistory = value;
+            _ = _settingsService.SaveSettingsAsync();
+        }
+
+        // 同步字段变更自动保存
+        partial void OnSyncEnabledChanged(bool value) => _ = SaveSyncSettingsAsync();
+        partial void OnAutoSyncChanged(bool value) => _ = SaveSyncSettingsAsync();
+        partial void OnSyncRepoOwnerChanged(string value) => _ = SaveSyncSettingsAsync();
+        partial void OnSyncRepoNameChanged(string value) => _ = SaveSyncSettingsAsync();
+        partial void OnSyncTokenChanged(string value) => _ = SaveSyncSettingsAsync();
+        partial void OnSyncBranchChanged(string value) => _ = SaveSyncSettingsAsync();
 
         // ===== 自动加载、插件目录 =====
 
@@ -340,7 +406,7 @@ namespace AvaloniaApplication2.ViewModels
                     StatusMessage = "缓存目录不存在";
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 StatusMessage = $"清除缓存失败: {ex.Message}";
             }
@@ -367,7 +433,7 @@ namespace AvaloniaApplication2.ViewModels
                     }
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 StatusMessage = $"选择文件夹失败: {ex.Message}";
             }
@@ -394,10 +460,114 @@ namespace AvaloniaApplication2.ViewModels
                     }
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 StatusMessage = $"选择文件夹失败: {ex.Message}";
             }
         }
+
+        [RelayCommand]
+        private void OpenUrl(string url)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"无法打开链接: {ex.Message}";
+            }
+        }
+
+        // ===== 用户数据管理 =====
+
+        [RelayCommand]
+        private void RefreshUserData()
+        {
+            UserDataFiles.Clear();
+            var dataDir = System.IO.Path.Combine(AppContext.BaseDirectory, "Data");
+            if (!System.IO.Directory.Exists(dataDir)) return;
+
+            foreach (var file in System.IO.Directory.GetFiles(dataDir, "*.json"))
+            {
+                var info = new System.IO.FileInfo(file);
+                string category = System.IO.Path.GetFileNameWithoutExtension(file) switch
+                {
+                    "settings" => "应用设置",
+                    "dashboard_layout" => "仪表盘布局",
+                    var n when n.StartsWith("plugin_") => "插件设置",
+                    _ => "其他数据"
+                };
+                UserDataFiles.Add(new UserDataFileInfo
+                {
+                    FileName = System.IO.Path.GetFileName(file),
+                    FilePath = file,
+                    Category = category,
+                    SizeBytes = info.Length,
+                    LastModified = info.LastWriteTime
+                });
+            }
+            StatusMessage = $"已加载 {UserDataFiles.Count} 个数据文件";
+        }
+
+        [RelayCommand]
+        private void ViewFileContent(UserDataFileInfo? file)
+        {
+            if (file == null || !System.IO.File.Exists(file.FilePath)) return;
+            try
+            {
+                file.Content = System.IO.File.ReadAllText(file.FilePath);
+                file.IsContentVisible = !file.IsContentVisible;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"读取失败: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        private async Task DeleteDataFileAsync(UserDataFileInfo? file)
+        {
+            if (file == null) return;
+            try
+            {
+                if (System.IO.File.Exists(file.FilePath))
+                    System.IO.File.Delete(file.FilePath);
+                UserDataFiles.Remove(file);
+                StatusMessage = $"已删除: {file.FileName}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"删除失败: {ex.Message}";
+            }
+        }
+    }
+
+    /// <summary>
+    /// 用户数据文件信息
+    /// </summary>
+    public partial class UserDataFileInfo : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
+    {
+        public string FileName { get; set; } = "";
+        public string FilePath { get; set; } = "";
+        public string Category { get; set; } = "";
+        public long SizeBytes { get; set; }
+        public DateTime LastModified { get; set; }
+
+        public string SizeDisplay => SizeBytes switch
+        {
+            >= 1024 => $"{SizeBytes / 1024.0:F1} KB",
+            _ => $"{SizeBytes} B"
+        };
+
+        private bool _isContentVisible;
+        public bool IsContentVisible { get => _isContentVisible; set => SetProperty(ref _isContentVisible, value); }
+
+        private string? _content;
+        public string? Content { get => _content; set => SetProperty(ref _content, value); }
     }
 }

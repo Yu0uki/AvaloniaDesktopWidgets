@@ -48,6 +48,11 @@ namespace WorldClockPlugin.ViewModels
         [ObservableProperty]
         private int activeTab = 0; // 0: 时钟, 1: 秒表, 2: 计时器
 
+        // 模拟表盘角度
+        [ObservableProperty] private double hourAngle;
+        [ObservableProperty] private double minuteAngle;
+        [ObservableProperty] private double secondAngle;
+
         public ObservableCollection<string> TimeZones { get; } = new()
         {
             "Local",
@@ -143,13 +148,18 @@ namespace WorldClockPlugin.ViewModels
             }
             catch (Exception)
             {
-                // 如果时区转换失败，使用本地时间
                 CurrentTime = DateTime.Now;
             }
+
+            // 计算表盘指针角度
+            var t = CurrentTime;
+            HourAngle = (t.Hour % 12) * 30 + t.Minute * 0.5;
+            MinuteAngle = t.Minute * 6 + t.Second * 0.1;
+            SecondAngle = t.Second * 6;
         }
 
         [RelayCommand]
-        private void StartStopwatch()
+        public void StartStopwatch()
         {
             if (!IsStopwatchRunning)
             {
@@ -167,20 +177,20 @@ namespace WorldClockPlugin.ViewModels
         }
 
         [RelayCommand]
-        private void StopStopwatch()
+        public void StopStopwatch()
         {
             IsStopwatchRunning = false;
         }
 
         [RelayCommand]
-        private void ResetStopwatch()
+        public void ResetStopwatch()
         {
             IsStopwatchRunning = false;
             StopwatchTime = TimeSpan.Zero;
         }
 
         [RelayCommand]
-        private void StartTimer()
+        public void StartTimer()
         {
             if (!IsTimerRunning && TimerDuration > TimeSpan.Zero)
             {
@@ -206,13 +216,13 @@ namespace WorldClockPlugin.ViewModels
         }
 
         [RelayCommand]
-        private void StopTimer()
+        public void StopTimer()
         {
             IsTimerRunning = false;
         }
 
         [RelayCommand]
-        private void ResetTimer()
+        public void ResetTimer()
         {
             IsTimerRunning = false;
             TimerTime = TimerDuration;

@@ -3,60 +3,63 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:AvaloniaApplication2.ViewModels"
+             xmlns:core="clr-namespace:AvaloniaApplication2.Core"
              x:DataType="vm:PluginWrapperViewModel"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="AvaloniaApplication2.Views.PluginWrapperView">
 
     <DockPanel>
         <!-- 顶部工具栏 -->
-        <Border DockPanel.Dock="Top" Height="40" Background="{DynamicResource CardBackgroundBrush}" 
+        <Border DockPanel.Dock="Top" Height="40" Background="{DynamicResource CardBackgroundBrush}"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
             <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0" Text="{Binding PluginName}" 
+                <TextBlock Grid.Column="0" Text="{Binding PluginName}"
                            VerticalAlignment="Center" Margin="15,0"
                            FontSize="14" FontWeight="SemiBold"
                            Foreground="{DynamicResource TextPrimaryBrush}"/>
-                
+
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" Margin="10,0">
-                    <!-- 插件设置 -->
-                    <Button Content="⚙️" Width="30" Height="30"
+                    <Button Width="30" Height="30"
                             Command="{Binding OpenSettingsCommand}"
                             ToolTip.Tip="插件设置"
                             Background="Transparent"
                             BorderThickness="0"
                             Foreground="{DynamicResource TextSecondaryBrush}"
                             IsVisible="{Binding HasSettingsView}">
+                        <TextBlock Text="{x:Static core:FluentIcons.Settings}" FontFamily="Segoe Fluent Icons" FontSize="14"/>
                         <Button.Styles>
                             <Style Selector="Button:pointerover">
-                                <Setter Property="Background" Value="#F0F0F0"/>
+                                <Setter Property="Background" Value="{DynamicResource NavHoverBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
                             </Style>
                         </Button.Styles>
                     </Button>
-                    
-                    <!-- 弹出为独立窗口 -->
-                    <Button Content="🗗" Width="30" Height="30"
+
+                    <Button Width="30" Height="30"
                             Command="{Binding OpenAsWindowCommand}"
                             ToolTip.Tip="在新窗口中打开"
                             Background="Transparent"
                             BorderThickness="0"
                             Foreground="{DynamicResource TextSecondaryBrush}">
+                        <TextBlock Text="{x:Static core:FluentIcons.PopOut}" FontFamily="Segoe Fluent Icons" FontSize="14"/>
                         <Button.Styles>
                             <Style Selector="Button:pointerover">
-                                <Setter Property="Background" Value="#F0F0F0"/>
+                                <Setter Property="Background" Value="{DynamicResource NavHoverBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
                             </Style>
                         </Button.Styles>
                     </Button>
-                    
-                    <!-- 关闭插件视图 -->
-                    <Button Content="✕" Width="30" Height="30"
+
+                    <Button Width="30" Height="30"
                             Command="{Binding ClosePluginCommand}"
                             ToolTip.Tip="关闭插件"
                             Background="Transparent"
                             BorderThickness="0"
                             Foreground="{DynamicResource TextSecondaryBrush}">
+                        <TextBlock Text="{x:Static core:FluentIcons.Close}" FontFamily="Segoe Fluent Icons" FontSize="14"/>
                         <Button.Styles>
                             <Style Selector="Button:pointerover">
-                                <Setter Property="Background" Value="#FFE3E3"/>
+                                <Setter Property="Background" Value="#33D13438"/>
                                 <Setter Property="Foreground" Value="#D13438"/>
                             </Style>
                         </Button.Styles>
@@ -64,8 +67,7 @@
                 </StackPanel>
             </Grid>
         </Border>
-        
-        <!-- 插件内容 -->
+
         <ContentPresenter Content="{Binding PluginContent}"/>
     </DockPanel>
 </UserControl>

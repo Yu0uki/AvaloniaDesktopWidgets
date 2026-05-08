@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
@@ -11,75 +12,70 @@ namespace AvaloniaApplication2.Views
         private DispatcherTimer? _clipboardTimer;
         private string? _lastClipboardContent;
 
+        private DashboardViewModel? VM => DataContext as DashboardViewModel;
+
         public DashboardView()
         {
             InitializeComponent();
-            Loaded += OnLoaded;
+            Loaded += (s, e) => StartClipboardMonitoring();
+            DataContextChanged += (s, e) =>
+            {
+                var vm = VM;
+                if (vm != null)
+                {
+                    vm.PropertyChanged += OnVmPropertyChanged;
+                }
+            };
         }
 
-        private void OnLoaded(object? sender, EventArgs e)
+        private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            StartClipboardMonitoring();
+            // 填充高度通过 XAML 绑定自动更新
         }
 
         private void StartClipboardMonitoring()
         {
-            _clipboardTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(3)
-            };
-            _clipboardTimer.Tick += async (s, e) => await CheckClipboard();
+            _clipboardTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+            _clipboardTimer.Tick += async (s, e) => await CheckClipboardAsync();
             _clipboardTimer.Start();
         }
 
-        private async System.Threading.Tasks.Task CheckClipboard()
+        private async System.Threading.Tasks.Task CheckClipboardAsync()
         {
             try
             {
                 var topLevel = TopLevel.GetTopLevel(this);
                 if (topLevel?.Clipboard is { } clipboard)
                 {
-#pragma warning disable CS0618
                     var text = await clipboard.GetTextAsync();
-#pragma warning restore CS0618
                     if (!string.IsNullOrEmpty(text) && text != _lastClipboardContent)
                     {
                         _lastClipboardContent = text;
-                        if (DataContext is DashboardViewModel vm)
-                        {
-                            vm.AddClipboardItem(text);
-                        }
+                        VM?.AddClipboardItem(text);
                     }
                 }
             }
-            catch
-            {
-                // 剪贴板访问可能因权限问题失败，忽略异常
-            }
+            catch { }
+        }
+
+        private void OnQuickAppTapped(object? sender, TappedEventArgs e)
+        {
+            if (sender is not StyledElement el) return;
+            if (el.DataContext is QuickAppInfo app)
+                VM?.LaunchQuickAppCommand.Execute(app);
         }
 
         private async void OnClipboardItemTapped(object? sender, TappedEventArgs e)
         {
-            if (sender is not Control control)
-                return;
-
-            if (control.DataContext is not ClipboardItem item)
-                return;
-
+            if (sender is not StyledElement el) return;
+            if (el.DataContext is not ClipboardItem item) return;
             try
             {
-                var topLevel = TopLevel.GetTopLevel(this);
-                if (topLevel?.Clipboard is { } clipboard)
-                {
-#pragma warning disable CS0618
-                    await clipboard.SetTextAsync(item.Content);
-#pragma warning restore CS0618
-                }
+                var tl = TopLevel.GetTopLevel(this);
+                if (tl?.Clipboard is { } cb)
+                    await cb.SetTextAsync(item.Content);
             }
-            catch
-            {
-                // 剪贴板写入可能失败
-            }
+            catch { }
         }
     }
 }

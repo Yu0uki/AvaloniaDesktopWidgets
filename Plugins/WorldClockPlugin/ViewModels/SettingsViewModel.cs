@@ -36,7 +36,7 @@ namespace WorldClockPlugin.ViewModels
         }
 
         [RelayCommand]
-        private void SaveSettingsCommand()
+        public void SaveSettingsCommand()
         {
             SaveSettings();
         }

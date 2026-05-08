@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:PasswordGeneratorPlugin.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="450"
+             x:Class="PasswordGeneratorPlugin.MainView"
+             x:DataType="vm:MainViewModel">
+
+    <UserControl.DataContext>
+        <vm:MainViewModel/>
+    </UserControl.DataContext>
+
+    <ScrollViewer Padding="30">
+        <StackPanel Spacing="20" MaxWidth="500">
+            <TextBlock Text="🔐 密码生成器" FontSize="24" FontWeight="SemiBold"/>
+
+            <!-- 长度 -->
+            <StackPanel Spacing="6">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" Text="密码长度" FontSize="13" Foreground="#666666"/>
+                    <TextBlock Grid.Column="1" Text="{Binding PasswordLength}" FontSize="13" FontWeight="SemiBold"/>
+                </Grid>
+                <Slider Minimum="6" Maximum="64" Value="{Binding PasswordLength}" TickFrequency="1"/>
+                <Grid ColumnDefinitions="*,*">
+                    <TextBlock Grid.Column="0" Text="6" FontSize="11" Foreground="#999999"/>
+                    <TextBlock Grid.Column="1" Text="64" FontSize="11" Foreground="#999999" HorizontalAlignment="Right"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- 字符选项 -->
+            <Border Background="#F5F5F5" CornerRadius="8" Padding="15">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="字符类型" FontWeight="Bold" FontSize="15"/>
+                    <CheckBox Content="大写字母 (A-Z)" IsChecked="{Binding UseUppercase}"/>
+                    <CheckBox Content="小写字母 (a-z)" IsChecked="{Binding UseLowercase}"/>
+                    <CheckBox Content="数字 (0-9)" IsChecked="{Binding UseNumbers}"/>
+                    <CheckBox Content="特殊字符 (!@#$...)" IsChecked="{Binding UseSymbols}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 生成按钮 -->
+            <Button Content="生成密码" Padding="15,12"
+                    Background="#0078D4" Foreground="White"
+                    CornerRadius="8" FontSize="15"
+                    HorizontalAlignment="Stretch"
+                    Command="{Binding GenerateCommand}"/>
+
+            <!-- 输出 -->
+            <Border Background="#E3F2FD" CornerRadius="8" Padding="15">
+                <StackPanel Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="生成的密码" FontWeight="Bold" FontSize="15" Foreground="#1565C0" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Content="📋 复制" Padding="10,6"
+                                Background="#1565C0" Foreground="White"
+                                CornerRadius="4" FontSize="12"
+                                Command="{Binding CopyToClipboardCommand}"/>
+                    </Grid>
+                    <TextBlock Text="{Binding GeneratedPassword}" FontSize="20"
+                               FontFamily="Consolas" TextWrapping="Wrap"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding StrengthText}" FontSize="13"
+                               Foreground="{Binding StrengthColor}"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

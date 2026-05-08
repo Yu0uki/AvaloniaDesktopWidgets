@@ -1,0 +1,60 @@
+{
+  "name": "Efficiency Workshop Plugin Market",
+  "plugins": [
+    {
+      "id": "WorldClock",
+      "name": "世界时钟",
+      "author": "Efficiency Workshop Team",
+      "description": "多时区世界时钟，支持计时器、秒表和倒计时功能",
+      "version": "1.0.0",
+      "updatedAt": "2026-05-01",
+      "downloadUrl": "https://raw.githubusercontent.com/Yu0uki/EfficiencyWorkshop.Plugins/main/Plugins/WorldClockPlugin.dll",
+      "icon": "🕐",
+      "tags": ["工具", "时钟"]
+    },
+    {
+      "id": "JsonToolbox",
+      "name": "JSON 工具箱",
+      "author": "Efficiency Workshop Team",
+      "description": "JSON 格式化、压缩、验证、转义等常用开发工具集",
+      "version": "1.0.0",
+      "updatedAt": "2026-05-01",
+      "downloadUrl": "https://raw.githubusercontent.com/Yu0uki/EfficiencyWorkshop.Plugins/main/Plugins/JsonToolboxPlugin.dll",
+      "icon": "🔧",
+      "tags": ["开发", "JSON"]
+    },
+    {
+      "id": "NotepadPlugin",
+      "name": "记事本",
+      "author": "Efficiency Workshop Team",
+      "description": "轻量级笔记管理，支持新建、编辑、删除和自动保存",
+      "version": "1.0.0",
+      "updatedAt": "2026-05-01",
+      "downloadUrl": "https://raw.githubusercontent.com/Yu0uki/EfficiencyWorkshop.Plugins/main/Plugins/NotepadPlugin.dll",
+      "icon": "📝",
+      "tags": ["工具", "笔记"]
+    },
+    {
+      "id": "UnitConverter",
+      "name": "单位换算器",
+      "author": "Efficiency Workshop Team",
+      "description": "常用单位换算工具，支持长度、重量、温度等多种单位转换",
+      "version": "1.0.0",
+      "updatedAt": "2026-05-08",
+      "downloadUrl": "https://raw.githubusercontent.com/Yu0uki/EfficiencyWorkshop.Plugins/main/Plugins/UnitConverterPlugin.dll",
+      "icon": "📐",
+      "tags": ["工具", "换算"]
+    },
+    {
+      "id": "PasswordGenerator",
+      "name": "密码生成器",
+      "author": "Efficiency Workshop Team",
+      "description": "安全密码生成工具，支持自定义长度、大小写、数字和特殊字符",
+      "version": "1.0.0",
+      "updatedAt": "2026-05-08",
+      "downloadUrl": "https://raw.githubusercontent.com/Yu0uki/EfficiencyWorkshop.Plugins/main/Plugins/PasswordGeneratorPlugin.dll",
+      "icon": "🔐",
+      "tags": ["安全", "工具"]
+    }
+  ]
+}

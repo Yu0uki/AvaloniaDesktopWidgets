@@ -35,6 +35,7 @@ namespace AvaloniaApplication2.Models
     {
         public string Name { get; set; } = "";
         public string Icon { get; set; } = "";
+        public string ExePath { get; set; } = "";
     }
 
     public class DashboardClipboardItem

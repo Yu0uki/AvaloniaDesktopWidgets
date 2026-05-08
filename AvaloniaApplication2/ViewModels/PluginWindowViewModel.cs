@@ -3,9 +3,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AvaloniaApplication2.ViewModels
 {
-    /// <summary>
-    /// 插件独立窗口视图模型
-    /// </summary>
     public partial class PluginWindowViewModel : ViewModelBase
     {
         [ObservableProperty]
@@ -17,6 +14,20 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty]
         private Control? pluginContent;
 
-        public MainWindowViewModel? MainWindowVM { get; set; }
+        [ObservableProperty]
+        private MainWindowViewModel? mainWindowVM;
+
+        private bool _disposed;
+
+        /// <summary>
+        /// P0: 断开 Visual Tree 引用，防止内存泄漏
+        /// </summary>
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            PluginContent = null;
+            MainWindowVM = null;
+        }
     }
 }

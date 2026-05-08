@@ -67,7 +67,7 @@ namespace JsonToolboxPlugin.ViewModels
         /// JSON 格式化（美化输出）
         /// </summary>
         [RelayCommand]
-        private void FormatJson()
+        public void FormatJson()
         {
             if (string.IsNullOrWhiteSpace(InputJson))
             {
@@ -110,7 +110,7 @@ namespace JsonToolboxPlugin.ViewModels
         /// JSON 压缩（移除空白）
         /// </summary>
         [RelayCommand]
-        private void MinifyJson()
+        public void MinifyJson()
         {
             if (string.IsNullOrWhiteSpace(InputJson))
             {
@@ -147,7 +147,7 @@ namespace JsonToolboxPlugin.ViewModels
         /// JSON 验证
         /// </summary>
         [RelayCommand]
-        private void ValidateJson()
+        public void ValidateJson()
         {
             if (string.IsNullOrWhiteSpace(InputJson))
             {
@@ -204,7 +204,7 @@ namespace JsonToolboxPlugin.ViewModels
         /// JSON 转义（将 JSON 字符串转义为可嵌入代码的格式）
         /// </summary>
         [RelayCommand]
-        private void EscapeJson()
+        public void EscapeJson()
         {
             if (string.IsNullOrWhiteSpace(InputJson))
             {
@@ -228,7 +228,7 @@ namespace JsonToolboxPlugin.ViewModels
         /// JSON 反转义
         /// </summary>
         [RelayCommand]
-        private void UnescapeJson()
+        public void UnescapeJson()
         {
             if (string.IsNullOrWhiteSpace(InputJson))
             {
@@ -256,7 +256,7 @@ namespace JsonToolboxPlugin.ViewModels
         /// 复制输出到剪贴板
         /// </summary>
         [RelayCommand]
-        private async Task CopyOutputAsync()
+        public async Task CopyOutputAsync()
         {
             if (string.IsNullOrEmpty(OutputText))
             {
@@ -284,7 +284,7 @@ namespace JsonToolboxPlugin.ViewModels
         /// 清空输入输出
         /// </summary>
         [RelayCommand]
-        private void ClearAll()
+        public void ClearAll()
         {
             InputJson = string.Empty;
             OutputText = string.Empty;
@@ -297,7 +297,7 @@ namespace JsonToolboxPlugin.ViewModels
         /// 交换输入和输出
         /// </summary>
         [RelayCommand]
-        private void SwapInputOutput()
+        public void SwapInputOutput()
         {
             if (string.IsNullOrEmpty(OutputText))
                 return;
@@ -312,7 +312,7 @@ namespace JsonToolboxPlugin.ViewModels
         /// 从剪贴板粘贴到输入
         /// </summary>
         [RelayCommand]
-        private async Task PasteFromClipboardAsync()
+        public async Task PasteFromClipboardAsync()
         {
             try
             {

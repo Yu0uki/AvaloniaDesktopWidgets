@@ -102,4 +102,43 @@ namespace AvaloniaApplication2.Converters
             throw new NotImplementedException();
         }
     }
+
+    /// <summary>
+    /// 布尔值反转转换器：true → false, false → true
+    /// </summary>
+    public class InvertBoolConverter : IValueConverter
+    {
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is bool b)
+                return !b;
+            return false;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is bool b)
+                return !b;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 字符串是否以 .png 结尾 → 用于图标类型判断（支持 invert 参数反转结果）
+    /// </summary>
+    public class IsPngPathConverter : IValueConverter
+    {
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            var isPng = value is string s && s.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
+            if (parameter is string p && p == "invert")
+                return !isPng;
+            return isPng;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }
