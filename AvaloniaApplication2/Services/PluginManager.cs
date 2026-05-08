@@ -436,7 +436,10 @@ namespace AvaloniaApplication2.Services
                 {
                     hotReloadManager.StartWatching(plugin.Id, dllPath);
                 }
-                
+
+                // 插件加载后自动启动，通知侧边栏显示
+                PluginStateChanged?.Invoke(plugin.Id, PluginStateChange.Started);
+
                 return plugin;
             }
             catch (Exception ex)
@@ -666,22 +669,25 @@ namespace AvaloniaApplication2.Services
         /// </summary>
         public async Task DeletePluginAsync(string pluginId)
         {
+            // 先保存 DLL 路径（UnloadPlugin 会从 _pluginInfos 中移除）
+            var pluginInfo = _pluginInfos.FirstOrDefault(p => p.Id == pluginId);
+            var dllPath = pluginInfo?.DllPath;
+
+            // 卸载插件（会清理 _pluginInfos、_loadedPlugins、_pluginContexts）
             UnloadPlugin(pluginId);
 
-            var pluginInfo = _pluginInfos.FirstOrDefault(p => p.Id == pluginId);
-            if (pluginInfo != null && File.Exists(pluginInfo.DllPath))
+            if (dllPath != null && File.Exists(dllPath))
             {
                 try
                 {
                     var recycleDir = Path.Combine(_pluginsDirectory, ".recycle");
                     Directory.CreateDirectory(recycleDir);
 
-                    var fileName = Path.GetFileName(pluginInfo.DllPath);
+                    var fileName = Path.GetFileName(dllPath);
                     var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                     var destPath = Path.Combine(recycleDir, $"{timestamp}_{fileName}");
 
-                    File.Move(pluginInfo.DllPath, destPath);
-                    _pluginInfos.Remove(pluginInfo);
+                    File.Move(dllPath, destPath);
 
                     _settingsService.Settings.EnabledPlugins.Remove(pluginId);
                     await _settingsService.SaveSettingsAsync();
@@ -715,9 +721,8 @@ namespace AvaloniaApplication2.Services
             if (!File.Exists(recycleFilePath)) return false;
 
             var fileName = Path.GetFileName(recycleFilePath);
-            // 文件名格式: yyyyMMdd_HHmmss_originalName.dll
-            var underscoreIdx = fileName.IndexOf('_', 16); // skip timestamp "yyyyMMdd_HHmmss_"
-            var originalName = underscoreIdx >= 0 ? fileName[(underscoreIdx + 1)..] : fileName;
+            // 文件名格式: yyyyMMdd_HHmmss_originalName.dll (前缀固定16字符)
+            var originalName = fileName.Length > 16 ? fileName[16..] : fileName;
             var destPath = Path.Combine(_pluginsDirectory, originalName);
 
             if (File.Exists(destPath))

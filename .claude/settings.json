@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sI --max-time 10 \"https://github.com/Yu0uki/EfficiencyWorkshop.Plugins\")",
+      "Bash(curl -sI --max-time 10 \"https://raw.githubusercontent.com/Yu0uki/EfficiencyWorkshop.Plugins/master/index.json\")",
+      "Bash(taskkill -f -im AvaloniaApplication2.exe)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Fields:', list\\(d.keys\\(\\)\\)\\); print\\('SyncEnabled:', d.get\\('syncEnabled'\\)\\); print\\('MarketUrl:', d.get\\('pluginMarketUrl',''\\)[:50]\\)\")",
+      "Bash(cat)",
+      "Bash(cd /tmp)",
+      "Bash(dotnet-script gen_icon.csx)",
+      "Bash(mkdir -p /tmp/icon_gen)",
+      "Read(//tmp/**)",
+      "Bash(cat /tmp/claude_av_output.txt)",
+      "Bash(wait)"
+    ]
+  }
+}

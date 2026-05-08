@@ -60,10 +60,7 @@ namespace AvaloniaApplication2
 
             if (_searchBox == null)
             {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    _searchBox = this.FindDescendantOfType<TextBox>();
-                }, DispatcherPriority.Loaded);
+                _searchBox = SearchTextBox;
             }
         }
 
@@ -173,6 +170,39 @@ namespace AvaloniaApplication2
             {
                 await newPluginVM.OnDropAsync(dllFiles);
             }
+        }
+
+        private void OnSearchBoxGotFocus(object? sender, GotFocusEventArgs e)
+        {
+            _viewModel?.FocusSearchCommand.Execute(null);
+        }
+
+        private void OnSearchBoxLostFocus(object? sender, RoutedEventArgs e)
+        {
+            // 延迟关闭确保 PointerPressed 先触发
+            Dispatcher.UIThread.RunJobs(DispatcherPriority.Input);
+            if (_viewModel != null)
+                _viewModel.ShowSearchHistory = false;
+        }
+
+        private void OnSearchHistoryItemPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (sender is Avalonia.Controls.Border { DataContext: string query })
+            {
+                e.Handled = true;
+                _viewModel?.SelectSearchHistoryCommand.Execute(query);
+            }
+        }
+
+        /// <summary>
+        /// 点击主内容区域空白处关闭浮层
+        /// </summary>
+        private void OnContentAreaPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (_viewModel == null) return;
+            _viewModel.ShowSearchHistory = false;
+            if (_viewModel.CurrentPage is ViewModels.DashboardViewModel dvm)
+                dvm.ClipboardExpanded = false;
         }
 
         private void OnSearchBoxKeyDown(object? sender, KeyEventArgs e)

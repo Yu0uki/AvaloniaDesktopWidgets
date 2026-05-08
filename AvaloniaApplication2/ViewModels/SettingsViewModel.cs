@@ -26,7 +26,7 @@ namespace AvaloniaApplication2.ViewModels
         private string pluginsDirectory;
 
         [ObservableProperty]
-        private string appVersion = "4.0.1";
+        private string appVersion = "5.0.1";
 
         [ObservableProperty]
         private string statusMessage = "";
@@ -55,6 +55,24 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty]
         private string cacheDirectory = System.IO.Path.Combine(AppContext.BaseDirectory, "appdata");
 
+        [ObservableProperty]
+        private string pluginMarketUrl = "";
+
+        // 用户数据文件列表
+        public ObservableCollection<UserDataFileInfo> UserDataFiles { get; } = new();
+
+        // 搜索历史
+        [ObservableProperty] private bool enableSearchHistory = true;
+
+        // 设置同步
+        [ObservableProperty] private bool syncEnabled;
+        [ObservableProperty] private bool autoSync;
+        [ObservableProperty] private string syncRepoOwner = "";
+        [ObservableProperty] private string syncRepoName = "";
+        [ObservableProperty] private string syncToken = "";
+        [ObservableProperty] private string syncBranch = "main";
+        [ObservableProperty] private string? lastSyncTime;
+
         private static readonly Color[] AccentColors = new[]
         {
             Color.FromRgb(0, 103, 192),
@@ -82,6 +100,15 @@ namespace AvaloniaApplication2.ViewModels
             CustomBackgroundImage = settingsService.Settings.CustomBackgroundImage;
             BackgroundImagePath = settingsService.Settings.BackgroundImagePath;
             DefaultStartupPageIndex = settingsService.Settings.DefaultStartupPageIndex;
+            PluginMarketUrl = settingsService.Settings.PluginMarketUrl;
+            SyncEnabled = settingsService.Settings.SyncEnabled;
+            AutoSync = settingsService.Settings.AutoSync;
+            SyncRepoOwner = settingsService.Settings.SyncRepoOwner;
+            SyncRepoName = settingsService.Settings.SyncRepoName;
+            SyncToken = settingsService.Settings.SyncToken;
+            SyncBranch = string.IsNullOrEmpty(settingsService.Settings.SyncBranch) ? "main" : settingsService.Settings.SyncBranch;
+            LastSyncTime = settingsService.Settings.LastSyncTime;
+            EnableSearchHistory = settingsService.Settings.EnableSearchHistory;
 
             if (AccentColorIndex >= 0 && AccentColorIndex < AccentColors.Length)
             {
@@ -112,6 +139,7 @@ namespace AvaloniaApplication2.ViewModels
             await _settingsService.UpdateThemeAsync(themeValue);
             ApplyTheme(themeValue);
             StatusMessage = $"主题已切换为: {themeValue}";
+            NotificationService.Instance.ShowInfo($"主题切换: {themeValue}");
         }
 
         private void ApplyTheme(string theme)
@@ -290,6 +318,60 @@ namespace AvaloniaApplication2.ViewModels
             }
         }
 
+        // ===== 设置同步 =====
+
+        [RelayCommand]
+        private async Task SaveSyncSettingsAsync()
+        {
+            var s = _settingsService.Settings;
+            s.SyncEnabled = SyncEnabled;
+            s.AutoSync = AutoSync;
+            s.SyncRepoOwner = SyncRepoOwner.Trim();
+            s.SyncRepoName = SyncRepoName.Trim();
+            s.SyncToken = SyncToken.Trim();
+            s.SyncBranch = string.IsNullOrWhiteSpace(SyncBranch) ? "main" : SyncBranch.Trim();
+            await _settingsService.SaveSettingsAsync();
+            LastSyncTime = s.LastSyncTime;
+            StatusMessage = "同步设置已保存";
+        }
+
+        [RelayCommand]
+        private async Task SyncNowAsync()
+        {
+            await SaveSyncSettingsAsync();
+            var syncService = DependencyInjection.ServiceContainer.GetService<SettingsSyncService>();
+            if (syncService == null)
+            {
+                StatusMessage = "同步服务不可用";
+                return;
+            }
+            StatusMessage = "正在同步...";
+            LastSyncTime = await syncService.SyncAsync();
+            StatusMessage = LastSyncTime;
+        }
+
+        // 市场URL变更自动保存
+        partial void OnPluginMarketUrlChanged(string value)
+        {
+            _settingsService.Settings.PluginMarketUrl = value;
+            _ = _settingsService.SaveSettingsAsync();
+        }
+
+        // 搜索历史自动保存
+        partial void OnEnableSearchHistoryChanged(bool value)
+        {
+            _settingsService.Settings.EnableSearchHistory = value;
+            _ = _settingsService.SaveSettingsAsync();
+        }
+
+        // 同步字段变更自动保存
+        partial void OnSyncEnabledChanged(bool value) => _ = SaveSyncSettingsAsync();
+        partial void OnAutoSyncChanged(bool value) => _ = SaveSyncSettingsAsync();
+        partial void OnSyncRepoOwnerChanged(string value) => _ = SaveSyncSettingsAsync();
+        partial void OnSyncRepoNameChanged(string value) => _ = SaveSyncSettingsAsync();
+        partial void OnSyncTokenChanged(string value) => _ = SaveSyncSettingsAsync();
+        partial void OnSyncBranchChanged(string value) => _ = SaveSyncSettingsAsync();
+
         // ===== 自动加载、插件目录 =====
 
         [RelayCommand]
@@ -383,5 +465,109 @@ namespace AvaloniaApplication2.ViewModels
                 StatusMessage = $"选择文件夹失败: {ex.Message}";
             }
         }
+
+        [RelayCommand]
+        private void OpenUrl(string url)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"无法打开链接: {ex.Message}";
+            }
+        }
+
+        // ===== 用户数据管理 =====
+
+        [RelayCommand]
+        private void RefreshUserData()
+        {
+            UserDataFiles.Clear();
+            var dataDir = System.IO.Path.Combine(AppContext.BaseDirectory, "Data");
+            if (!System.IO.Directory.Exists(dataDir)) return;
+
+            foreach (var file in System.IO.Directory.GetFiles(dataDir, "*.json"))
+            {
+                var info = new System.IO.FileInfo(file);
+                string category = System.IO.Path.GetFileNameWithoutExtension(file) switch
+                {
+                    "settings" => "应用设置",
+                    "dashboard_layout" => "仪表盘布局",
+                    var n when n.StartsWith("plugin_") => "插件设置",
+                    _ => "其他数据"
+                };
+                UserDataFiles.Add(new UserDataFileInfo
+                {
+                    FileName = System.IO.Path.GetFileName(file),
+                    FilePath = file,
+                    Category = category,
+                    SizeBytes = info.Length,
+                    LastModified = info.LastWriteTime
+                });
+            }
+            StatusMessage = $"已加载 {UserDataFiles.Count} 个数据文件";
+        }
+
+        [RelayCommand]
+        private void ViewFileContent(UserDataFileInfo? file)
+        {
+            if (file == null || !System.IO.File.Exists(file.FilePath)) return;
+            try
+            {
+                file.Content = System.IO.File.ReadAllText(file.FilePath);
+                file.IsContentVisible = !file.IsContentVisible;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"读取失败: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        private async Task DeleteDataFileAsync(UserDataFileInfo? file)
+        {
+            if (file == null) return;
+            try
+            {
+                if (System.IO.File.Exists(file.FilePath))
+                    System.IO.File.Delete(file.FilePath);
+                UserDataFiles.Remove(file);
+                StatusMessage = $"已删除: {file.FileName}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"删除失败: {ex.Message}";
+            }
+        }
+    }
+
+    /// <summary>
+    /// 用户数据文件信息
+    /// </summary>
+    public partial class UserDataFileInfo : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
+    {
+        public string FileName { get; set; } = "";
+        public string FilePath { get; set; } = "";
+        public string Category { get; set; } = "";
+        public long SizeBytes { get; set; }
+        public DateTime LastModified { get; set; }
+
+        public string SizeDisplay => SizeBytes switch
+        {
+            >= 1024 => $"{SizeBytes / 1024.0:F1} KB",
+            _ => $"{SizeBytes} B"
+        };
+
+        private bool _isContentVisible;
+        public bool IsContentVisible { get => _isContentVisible; set => SetProperty(ref _isContentVisible, value); }
+
+        private string? _content;
+        public string? Content { get => _content; set => SetProperty(ref _content, value); }
     }
 }

@@ -30,7 +30,7 @@ namespace AvaloniaApplication2.ViewModels
         private object? currentPage;
 
         [ObservableProperty]
-        private string windowTitle = "效率工坊";
+        private string windowTitle = "EfficiencyWorkshop 5.0.1";
 
         [ObservableProperty]
         private bool isMaximized;
@@ -51,13 +51,27 @@ namespace AvaloniaApplication2.ViewModels
         private string? selectedPluginId;
 
         [ObservableProperty]
-        private bool isSidebarExpanded = false;
+        private bool isSidebarExpanded = true;
 
         [ObservableProperty]
-        private string sidebarWidth = "64";
+        private string sidebarWidth = "220";
 
         [ObservableProperty]
         private string searchQuery = "";
+
+        partial void OnSearchQueryChanged(string value)
+        {
+            if (EnableSearchHistory && SearchHistoryItems.Count > 0)
+                ShowSearchHistory = true;
+        }
+
+        [ObservableProperty]
+        private bool showSearchHistory;
+
+        [ObservableProperty]
+        private bool enableSearchHistory = true;
+
+        public ObservableCollection<string> SearchHistoryItems { get; } = new();
 
         // 通知中心
         [ObservableProperty]
@@ -97,6 +111,10 @@ namespace AvaloniaApplication2.ViewModels
             foreach (var entry in _settingsService.Settings.NotificationLog.Take(50))
                 NotificationHistory.Add(entry);
             UpdateNotificationSummary();
+
+            EnableSearchHistory = _settingsService.Settings.EnableSearchHistory;
+            foreach (var h in _settingsService.Settings.SearchHistory.Take(20))
+                SearchHistoryItems.Add(h);
 
             _notificationService.NotificationAdded += OnNotificationAdded;
 
@@ -177,6 +195,13 @@ namespace AvaloniaApplication2.ViewModels
         {
             SelectedNavIndex = 1;
             CurrentPage = new PluginManagerViewModel(_pluginManager);
+        }
+
+        [RelayCommand]
+        private void NavigateToPluginMarket()
+        {
+            SelectedNavIndex = 4;
+            CurrentPage = new PluginMarketViewModel(_pluginManager);
         }
 
         [RelayCommand]
@@ -402,7 +427,23 @@ namespace AvaloniaApplication2.ViewModels
                     FileName = url,
                     UseShellExecute = true
                 });
+
+                // 保存搜索历史
+                if (EnableSearchHistory)
+                {
+                    var q = SearchQuery.Trim();
+                    SearchHistoryItems.Remove(q);
+                    SearchHistoryItems.Insert(0, q);
+                    while (SearchHistoryItems.Count > 20)
+                        SearchHistoryItems.RemoveAt(SearchHistoryItems.Count - 1);
+
+                    _settingsService.Settings.SearchHistory = SearchHistoryItems.ToList();
+                    _ = _settingsService.SaveSettingsAsync();
+                }
+
                 _notificationService.ShowInfo($"正在搜索: {SearchQuery}");
+                SearchQuery = "";
+                ShowSearchHistory = false;
             }
             catch (Exception ex)
             {
@@ -412,7 +453,24 @@ namespace AvaloniaApplication2.ViewModels
         }
 
         [RelayCommand]
-        private void FocusSearch() { }
+        private void FocusSearch() { ShowSearchHistory = EnableSearchHistory && SearchHistoryItems.Count > 0; }
+
+        [RelayCommand]
+        private void SelectSearchHistory(string query)
+        {
+            SearchQuery = query;
+            ShowSearchHistory = false;
+            WebSearch();
+        }
+
+        [RelayCommand]
+        private async Task ClearSearchHistory()
+        {
+            SearchHistoryItems.Clear();
+            _settingsService.Settings.SearchHistory.Clear();
+            await _settingsService.SaveSettingsAsync();
+            ShowSearchHistory = false;
+        }
 
         [RelayCommand]
         private async Task ToggleSidebar()

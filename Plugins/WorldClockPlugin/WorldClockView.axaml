@@ -39,12 +39,34 @@
       <TabItem Header="⏰ 时钟">
         <ScrollViewer>
           <StackPanel Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <!-- 当前时间显示 -->
+
+            <!-- 模拟表盘 -->
+            <Border Background="#2D2D2D" CornerRadius="120" Width="240" Height="240"
+                    HorizontalAlignment="Center" BoxShadow="0 4 20 0 #40000000"
+                    x:Name="ClockFace">
+              <Canvas Width="240" Height="240" x:Name="ClockCanvas">
+                <!-- 表盘刻度 -->
+                <TextBlock Text="12" FontSize="14" FontWeight="Bold" Foreground="White"
+                           Canvas.Left="108" Canvas.Top="8"/>
+                <TextBlock Text="3" FontSize="14" FontWeight="Bold" Foreground="White"
+                           Canvas.Left="218" Canvas.Top="108"/>
+                <TextBlock Text="6" FontSize="14" FontWeight="Bold" Foreground="White"
+                           Canvas.Left="112" Canvas.Top="210"/>
+                <TextBlock Text="9" FontSize="14" FontWeight="Bold" Foreground="White"
+                           Canvas.Left="10" Canvas.Top="108"/>
+                <!-- 中心点 -->
+                <Ellipse Width="10" Height="10" Fill="White"
+                         Canvas.Left="115" Canvas.Top="115"/>
+                <!-- 指针将通过代码动态绘制 -->
+              </Canvas>
+            </Border>
+
+            <!-- 当前时间数字显示 -->
             <Border Background="#F5F5F5" CornerRadius="10" Padding="30" HorizontalAlignment="Center">
               <StackPanel Spacing="10" HorizontalAlignment="Center">
-                <TextBlock Text="{Binding CurrentTime, StringFormat={}{0:yyyy-MM-dd}}" 
+                <TextBlock Text="{Binding CurrentTime, StringFormat={}{0:yyyy-MM-dd}}"
                            FontSize="18" HorizontalAlignment="Center" Foreground="#666666"/>
-                <TextBlock Text="{Binding CurrentTime, StringFormat={}{0:HH:mm:ss}}" 
+                <TextBlock Text="{Binding CurrentTime, StringFormat={}{0:HH:mm:ss}}"
                            FontSize="48" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#333333"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="5">
                   <TextBlock Text="📍" FontSize="16"/>

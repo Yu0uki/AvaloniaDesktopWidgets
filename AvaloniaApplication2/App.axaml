@@ -20,6 +20,9 @@
         <DataTemplate DataType="vm:LogsViewModel">
             <views:LogsView/>
         </DataTemplate>
+        <DataTemplate DataType="vm:PluginMarketViewModel">
+            <views:PluginMarketplaceView/>
+        </DataTemplate>
 
         <!-- 保留 ViewLocator 作为备用 -->
         <local:ViewLocator/>
@@ -67,6 +70,7 @@
             <converters:IsPngPathConverter x:Key="IsPngPathConverter"/>
             <converters:PluginStatusBorderBrushConverter x:Key="PluginStatusBorderBrushConverter"/>
             <converters:PluginIconConverter x:Key="PluginIconConverter"/>
+            <converters:LogTypeColorConverter x:Key="LogTypeColorConverter"/>
 
             <!-- 运行时可变资源 -->
             <SolidColorBrush x:Key="TopBarAccentBorderBrush" Color="#E0E0E0"/>

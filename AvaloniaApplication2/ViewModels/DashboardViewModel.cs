@@ -116,11 +116,13 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty] private bool showSystemMonitorCard = true;
         [ObservableProperty] private bool showTodoCard = true;
         [ObservableProperty] private bool showClipboardCard = true;
+        [ObservableProperty] private bool clipboardExpanded;
         [ObservableProperty] private bool showPluginStatsCard = true;
 
         public ObservableCollection<QuickAppInfo> QuickApps { get; } = new();
         public ObservableCollection<TodoItem> TodoItems { get; } = new();
-        public ObservableCollection<ClipboardItem> ClipboardHistory { get; } = new();
+        private readonly ClipboardService _clipboardService;
+        public ObservableCollection<ClipboardItem> ClipboardHistory => _clipboardService.History;
 
         public ObservableCollection<string> Cities { get; } = new()
         {
@@ -131,6 +133,7 @@ namespace AvaloniaApplication2.ViewModels
         public DashboardViewModel(PluginManager pluginManager)
         {
             _pluginManager = pluginManager;
+            _clipboardService = DependencyInjection.ServiceContainer.GetRequiredService<ClipboardService>();
 
             _pluginManager.PluginInfos.CollectionChanged += OnPluginCollectionChanged;
             foreach (var plugin in _pluginManager.PluginInfos)
@@ -295,6 +298,51 @@ namespace AvaloniaApplication2.ViewModels
         }
 
         /// <summary>
+        /// 将旧英文名称迁移为中文名称，返回 (displayName, exePath)。非系统工具返回原值。
+        /// </summary>
+        private static (string name, string exePath) MigrateSystemTool(string name, string exePath)
+        {
+            var known = new Dictionary<string, (string display, string exe)>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["notepad"] = ("记事本", "notepad.exe"),
+                ["notepad.exe"] = ("记事本", "notepad.exe"),
+                ["powershell"] = ("终端", "powershell.exe"),
+                ["powershell.exe"] = ("终端", "powershell.exe"),
+                ["mspaint"] = ("画图", "mspaint.exe"),
+                ["mspaint.exe"] = ("画图", "mspaint.exe"),
+                ["calc"] = ("计算器", "calc.exe"),
+                ["calc.exe"] = ("计算器", "calc.exe"),
+                ["explorer"] = ("文件管理器", "explorer.exe"),
+                ["explorer.exe"] = ("文件管理器", "explorer.exe"),
+                ["ms-settings:"] = ("系统设置", "ms-settings:"),
+                ["soundrecorder"] = ("", ""), // 废弃，不再添加
+            };
+
+            // 已经是中文名，直接匹配 ExePath
+            var reverse = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["记事本"] = "notepad.exe",
+                ["终端"] = "powershell.exe",
+                ["画图"] = "mspaint.exe",
+                ["计算器"] = "calc.exe",
+                ["文件管理器"] = "explorer.exe",
+                ["系统设置"] = "ms-settings:",
+            };
+
+            if (reverse.TryGetValue(name, out var knownExe))
+            {
+                if (string.IsNullOrEmpty(exePath))
+                    return (name, knownExe);
+                return (name, exePath);
+            }
+
+            if (known.TryGetValue(name, out var mapped))
+                return mapped;
+
+            // 用户自定义应用，保持不变
+            return (name, exePath);
+        }
+
         /// 首次启动时添加默认系统工具（仅当无任何已保存数据时触发）
         /// </summary>
         private void EnsureDefaultSystemTools()
@@ -474,6 +522,12 @@ namespace AvaloniaApplication2.ViewModels
         // ===== 布局编辑命令 =====
 
         [RelayCommand]
+        private void ToggleClipboard()
+        {
+            ClipboardExpanded = !ClipboardExpanded;
+        }
+
+        [RelayCommand]
         private void ToggleLayoutEdit()
         {
             IsEditingLayout = !IsEditingLayout;
@@ -523,18 +577,7 @@ namespace AvaloniaApplication2.ViewModels
 
         public void AddClipboardItem(string content)
         {
-            if (string.IsNullOrWhiteSpace(content))
-                return;
-
-            // 去重：如果最新一条内容相同则跳过
-            if (ClipboardHistory.Count > 0 && ClipboardHistory[0].Content == content)
-                return;
-
-            ClipboardHistory.Insert(0, new ClipboardItem { Content = content, Time = DateTime.Now });
-
-            // 限制历史记录最多 50 条
-            while (ClipboardHistory.Count > 50)
-                ClipboardHistory.RemoveAt(ClipboardHistory.Count - 1);
+            _clipboardService.AddItem(content);
         }
 
         // ===== 数据持久化 =====
@@ -606,11 +649,29 @@ namespace AvaloniaApplication2.ViewModels
                     TodoItems.Add(item);
                 }
 
-                // 恢复快捷应用
+                // 恢复快捷应用（含迁移逻辑：将旧英文名转为中文名）
+                var migratedNames = new HashSet<string>();
                 foreach (var q in data.QuickApps)
                 {
-                    QuickApps.Add(new QuickAppInfo { Name = q.Name, Icon = q.Icon, ExePath = q.ExePath });
+                    var (migratedName, migratedExe) = MigrateSystemTool(q.Name, q.ExePath ?? "");
+                    if (!string.IsNullOrEmpty(migratedExe))
+                    {
+                        // 通过 ExePath 去重：同一程序只保留一条
+                        var dedupKey = migratedExe;
+                        if (migratedNames.Contains(dedupKey)) continue;
+                        migratedNames.Add(dedupKey);
+                        QuickApps.Add(new QuickAppInfo { Name = migratedName, Icon = q.Icon, ExePath = migratedExe });
+                    }
+                    else
+                    {
+                        // 用户自定义应用：通过名称去重
+                        if (QuickApps.Any(a => a.Name == q.Name && a.ExePath == (q.ExePath ?? ""))) continue;
+                        QuickApps.Add(new QuickAppInfo { Name = q.Name, Icon = q.Icon, ExePath = q.ExePath ?? "" });
+                    }
                 }
+
+                // 确保默认系统工具都存在（补充迁移后可能缺失的）
+                EnsureDefaultSystemTools();
 
                 // 恢复布局设置
                 if (data.Layout != null)
@@ -651,9 +712,12 @@ namespace AvaloniaApplication2.ViewModels
 
             // 系统工具由 EnsureDefaultSystemTools() 统一补齐
 
-            // 默认剪贴板历史
-            ClipboardHistory.Add(new ClipboardItem { Content = "npm install @tauri-apps/cli", Time = DateTime.Now.AddMinutes(-5) });
-            ClipboardHistory.Add(new ClipboardItem { Content = "https://github.com/tauri-apps...", Time = DateTime.Now.AddMinutes(-15) });
+            // 默认剪贴板历史 (仅当为空时)
+            if (ClipboardHistory.Count == 0)
+            {
+                _clipboardService.AddItem("npm install @tauri-apps/cli");
+                _clipboardService.AddItem("https://github.com/tauri-apps/tauri");
+            }
         }
 
         // ===== 插件事件处理 =====

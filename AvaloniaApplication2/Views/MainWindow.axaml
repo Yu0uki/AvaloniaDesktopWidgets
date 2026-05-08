@@ -24,8 +24,8 @@
         <Style Selector="Border.topbar">
             <Setter Property="Background" Value="{DynamicResource TopBarBackgroundBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource TopBarAccentBorderBrush}"/>
-            <Setter Property="BorderThickness" Value="0,0,0,2"/>
-            <Setter Property="Height" Value="48"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Height" Value="40"/>
         </Style>
 
         <!-- 搜索框样式 -->
@@ -72,9 +72,9 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
-            <Setter Property="Width" Value="46"/>
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="FontSize" Value="10"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="CornerRadius" Value="4"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -96,9 +96,9 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
-            <Setter Property="Width" Value="46"/>
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="CornerRadius" Value="4"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -151,17 +151,19 @@
                 </StackPanel>
 
                 <!-- 中间：搜索框 -->
-                <Border Grid.Column="1" Classes="search-box" HorizontalAlignment="Center" Margin="0,8">
+                <Border Grid.Column="1" Classes="search-box" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                        <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Search}" FontFamily="Segoe Fluent Icons" FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1" Text="{Binding SearchQuery}"
+                        <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Search}" FontFamily="Segoe Fluent Icons" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" x:Name="SearchTextBox"
+                                 Text="{Binding SearchQuery}"
                                  Watermark="搜索应用、文件或网页... (回车搜索)"
                                  Background="Transparent" BorderThickness="0"
                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                 FontSize="13" VerticalAlignment="Center"
-                                 KeyDown="OnSearchBoxKeyDown"/>
+                                 FontSize="12" VerticalAlignment="Center"
+                                 KeyDown="OnSearchBoxKeyDown"
+                                 GotFocus="OnSearchBoxGotFocus" LostFocus="OnSearchBoxLostFocus"/>
                         <Border Grid.Column="2" Background="{DynamicResource ShortcutKeyBackgroundBrush}" CornerRadius="4" Padding="4,2" VerticalAlignment="Center">
-                            <TextBlock Text="Ctrl+K" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="Ctrl+K" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         </Border>
                     </Grid>
                 </Border>
@@ -249,6 +251,17 @@
                             </StackPanel>
                         </Button>
 
+                        <!-- 插件市场 -->
+                        <Button Classes="nav-button" Command="{Binding NavigateToPluginMarketCommand}"
+                                ToolTip.Tip="插件市场"
+                                IsVisible="{Binding !IsShowingPluginView}"
+                                Classes.active="{Binding SelectedNavIndex, Converter={StaticResource IntToBoolConverter}, ConverterParameter=4}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="{x:Static core:FluentIcons.Marketplace}" FontFamily="Segoe Fluent Icons" FontSize="20"/>
+                                <TextBlock Text="市场" Classes="nav-label" IsVisible="{Binding IsSidebarExpanded}"/>
+                            </StackPanel>
+                        </Button>
+
                         <!-- 设置 -->
                         <Button Classes="nav-button" Command="{Binding NavigateToSettingsCommand}"
                                 ToolTip.Tip="设置"
@@ -311,8 +324,54 @@
             </Border>
 
             <!-- 主内容区域 -->
-            <Grid Grid.Column="1" Background="{DynamicResource WindowBackgroundBrush}">
+            <Grid Grid.Column="1" Background="{DynamicResource WindowBackgroundBrush}"
+                  PointerPressed="OnContentAreaPressed">
                 <ContentControl Content="{Binding CurrentPage}"/>
+
+                <!-- 搜索历史浮层（最顶层） -->
+                <Border IsVisible="{Binding ShowSearchHistory}"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="6"
+                        BoxShadow="0 4 16 0 #33000000"
+                        Width="320" HorizontalAlignment="Center"
+                        VerticalAlignment="Top" Margin="0,8,0,0"
+                        ZIndex="999" IsHitTestVisible="True">
+                    <StackPanel>
+                        <ItemsControl ItemsSource="{Binding SearchHistoryItems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="10,8" Cursor="Hand"
+                                            Background="Transparent"
+                                            PointerPressed="OnSearchHistoryItemPressed">
+                                        <Border.Styles>
+                                            <Style Selector="Border:pointerover">
+                                                <Setter Property="Background" Value="{DynamicResource NavHoverBrush}"/>
+                                            </Style>
+                                        </Border.Styles>
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                            <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Logs}"
+                                                       FontFamily="Segoe Fluent Icons" FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding}" FontSize="13"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                                Padding="8,4" HorizontalAlignment="Right">
+                            <Button Background="Transparent" BorderThickness="0" Padding="4"
+                                    Command="{Binding ClearSearchHistoryCommand}">
+                                <TextBlock Text="清除历史" FontSize="11"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            </Button>
+                        </Border>
+                    </StackPanel>
+                </Border>
 
                 <!-- Toast 通知叠加层 -->
                 <Border HorizontalAlignment="Right" VerticalAlignment="Top"

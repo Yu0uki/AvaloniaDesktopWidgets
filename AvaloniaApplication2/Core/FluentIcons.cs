@@ -65,10 +65,15 @@ namespace AvaloniaApplication2.Core
         public const string JsonTool = "";           // Code
         public const string WorldClock = "";         // Clock
         public const string DefaultPlugin = "";      // Puzzle fallback
+        public const string Password = "";           // Lock
+        public const string UnitConverter = "";      // Switch (swap/convert)
 
         // Logs / History
         public const string Logs = "";               // History
         public const string RecycleBin = "";         // Delete (reuse)
+
+        // Marketplace
+        public const string Marketplace = "";        // Shop
 
         // Badge dot
         public const string Circle = "";             // CircleFill

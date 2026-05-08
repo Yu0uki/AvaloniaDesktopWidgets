@@ -25,9 +25,57 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty]
         private string statusMessage = "拖拽 DLL 文件到此处加载插件";
 
+        [ObservableProperty]
+        private bool showRecycleBin;
+
+        public ObservableCollection<string> RecycleBinItems { get; } = new();
+
         public PluginManagerViewModel(PluginManager pluginManager)
         {
             _pluginManager = pluginManager;
+        }
+
+        [RelayCommand]
+        private void ToggleRecycleBin()
+        {
+            ShowRecycleBin = !ShowRecycleBin;
+            if (ShowRecycleBin) RefreshRecycleBin();
+        }
+
+        [RelayCommand]
+        private void RefreshRecycleBin()
+        {
+            RecycleBinItems.Clear();
+            foreach (var item in _pluginManager.GetRecycleBinItems())
+                RecycleBinItems.Add(item);
+            StatusMessage = RecycleBinItems.Count > 0
+                ? $"回收站: {RecycleBinItems.Count} 个文件"
+                : "回收站为空";
+        }
+
+        [RelayCommand]
+        private async Task RestoreFromRecycleBin(string filePath)
+        {
+            try
+            {
+                if (await _pluginManager.RestoreFromRecycleBinAsync(filePath))
+                {
+                    RefreshRecycleBin();
+                    StatusMessage = "插件已恢复";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"恢复失败: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        private void EmptyRecycleBin()
+        {
+            _pluginManager.EmptyRecycleBin();
+            RefreshRecycleBin();
+            StatusMessage = "回收站已清空";
         }
 
         /// <summary>

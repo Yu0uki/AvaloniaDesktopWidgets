@@ -20,6 +20,8 @@ namespace AvaloniaApplication2.Converters
                 "notepadplugin" or "notepad" => FluentIcons.Notepad,
                 "jsontoolbox" or "jsontoolboxplugin" => FluentIcons.JsonTool,
                 "worldclock" or "worldclockplugin" => FluentIcons.WorldClock,
+                "passwordgenerator" or "passwordgeneratorplugin" => FluentIcons.Password,
+                "unitconverter" or "unitconverterplugin" => FluentIcons.UnitConverter,
                 _ => FluentIcons.DefaultPlugin
             };
         }
