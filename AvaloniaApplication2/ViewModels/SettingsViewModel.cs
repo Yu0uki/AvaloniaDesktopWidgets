@@ -1,7 +1,9 @@
+using AvaloniaApplication2.Models;
 using AvaloniaApplication2.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -15,7 +17,7 @@ namespace AvaloniaApplication2.ViewModels
         private readonly SettingsService _settingsService;
 
         [ObservableProperty]
-        private int selectedThemeIndex = 1; // 0=Dark, 1=Light, 2=System
+        private int selectedThemeIndex = 1;
 
         [ObservableProperty]
         private bool autoLoadPlugins;
@@ -24,7 +26,7 @@ namespace AvaloniaApplication2.ViewModels
         private string pluginsDirectory;
 
         [ObservableProperty]
-        private string appVersion = "1.0.0";
+        private string appVersion = "4.0.1";
 
         [ObservableProperty]
         private string statusMessage = "";
@@ -32,54 +34,45 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty]
         private int selectedSettingsTab;
 
-        // 启动页面
         [ObservableProperty]
         private int defaultStartupPageIndex;
 
-        // 语言 (0=Auto, 1=简体中文, 2=English)
         [ObservableProperty]
         private int languageIndex = 1;
 
-        // 主题色 (0=默认蓝, 1=翠绿, 2=紫色, 3=橙色, 4=红色)
         [ObservableProperty]
         private int accentColorIndex;
 
-        // 背景不透明度
         [ObservableProperty]
         private double backgroundOpacity = 85;
 
-        // 自定义背景图片
         [ObservableProperty]
         private bool customBackgroundImage;
 
-        // 背景图片路径
         [ObservableProperty]
         private string backgroundImagePath = "";
 
-        // 缓存目录
         [ObservableProperty]
-        private string cacheDirectory = System.IO.Path.Combine(System.AppContext.BaseDirectory, "appdata");
+        private string cacheDirectory = System.IO.Path.Combine(AppContext.BaseDirectory, "appdata");
 
-        // 预设主题色
         private static readonly Color[] AccentColors = new[]
         {
-            Color.FromRgb(0, 103, 192),    // 默认蓝
-            Color.FromRgb(16, 137, 62),     // 翠绿
-            Color.FromRgb(136, 23, 152),    // 紫色
-            Color.FromRgb(210, 75, 0),      // 橙色
-            Color.FromRgb(197, 0, 47),      // 红色
+            Color.FromRgb(0, 103, 192),
+            Color.FromRgb(16, 137, 62),
+            Color.FromRgb(136, 23, 152),
+            Color.FromRgb(210, 75, 0),
+            Color.FromRgb(197, 0, 47),
         };
 
         public SettingsViewModel(SettingsService settingsService)
         {
             _settingsService = settingsService;
 
-            // 加载当前设置
             SelectedThemeIndex = settingsService.Settings.Theme.ToLower() switch
             {
                 "dark" => 0,
                 "system" => 2,
-                _ => 1 // light (默认浅色)
+                _ => 1
             };
             AutoLoadPlugins = settingsService.Settings.AutoLoadPlugins;
             PluginsDirectory = settingsService.Settings.PluginsDirectory;
@@ -90,7 +83,6 @@ namespace AvaloniaApplication2.ViewModels
             BackgroundImagePath = settingsService.Settings.BackgroundImagePath;
             DefaultStartupPageIndex = settingsService.Settings.DefaultStartupPageIndex;
 
-            // 应用已保存的主题色和背景透明度
             if (AccentColorIndex >= 0 && AccentColorIndex < AccentColors.Length)
             {
                 ApplyAccentColor();
@@ -153,22 +145,18 @@ namespace AvaloniaApplication2.ViewModels
             var color = AccentColors[AccentColorIndex];
             var brush = new SolidColorBrush(color);
 
-            // 生成浅色变体（用于背景色，如 hover/active 状态）
             var lightColor = Color.FromRgb(
                 (byte)Math.Min(255, color.R + 160),
                 (byte)Math.Min(255, color.G + 160),
                 (byte)Math.Min(255, color.B + 160));
             var lightBrush = new SolidColorBrush(lightColor);
 
-            // 顶部栏主题色底色（非常淡，约10%透明度）
             var topBarTintColor = Color.FromArgb(25, color.R, color.G, color.B);
             var topBarTintBrush = new SolidColorBrush(topBarTintColor);
 
-            // 侧边栏主题色底色
             var sidebarTintColor = Color.FromArgb(18, color.R, color.G, color.B);
             var sidebarTintBrush = new SolidColorBrush(sidebarTintColor);
 
-            // 更新全局资源
             App.Current.Resources["AccentBrush"] = brush;
             App.Current.Resources["AccentColor"] = color;
             App.Current.Resources["NavActiveBrush"] = lightBrush;
@@ -218,15 +206,13 @@ namespace AvaloniaApplication2.ViewModels
                 return;
             }
 
-            // 移除应用层覆盖以获取当前主题的原始背景色
             App.Current.Resources.Remove("WindowBackgroundBrush");
             var bgBrush = App.Current.Resources["WindowBackgroundBrush"] as SolidColorBrush;
             if (bgBrush == null) return;
 
             var opacity = BackgroundOpacity / 100.0;
-            if (opacity >= 1.0) return; // 完全不需要调整
+            if (opacity >= 1.0) return;
 
-            // 基于当前主题背景色创建带透明度的版本
             var adjustedColor = Color.FromArgb(
                 (byte)(255 * opacity),
                 bgBrush.Color.R, bgBrush.Color.G, bgBrush.Color.B);
@@ -240,7 +226,6 @@ namespace AvaloniaApplication2.ViewModels
             _ = _settingsService.UpdateCustomBackgroundImageAsync(value);
             if (!value && App.Current != null)
             {
-                // 移除应用层覆盖，让 ThemeDictionary 的背景生效
                 App.Current.Resources.Remove("WindowBackgroundBrush");
                 ApplyBackgroundOpacity();
             }
@@ -277,7 +262,7 @@ namespace AvaloniaApplication2.ViewModels
                     }
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 StatusMessage = $"选择图片失败: {ex.Message}";
             }
@@ -301,7 +286,6 @@ namespace AvaloniaApplication2.ViewModels
                 }
                 catch
                 {
-                    // 图片加载失败
                 }
             }
         }
@@ -340,7 +324,7 @@ namespace AvaloniaApplication2.ViewModels
                     StatusMessage = "缓存目录不存在";
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 StatusMessage = $"清除缓存失败: {ex.Message}";
             }
@@ -367,7 +351,7 @@ namespace AvaloniaApplication2.ViewModels
                     }
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 StatusMessage = $"选择文件夹失败: {ex.Message}";
             }
@@ -394,7 +378,7 @@ namespace AvaloniaApplication2.ViewModels
                     }
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 StatusMessage = $"选择文件夹失败: {ex.Message}";
             }

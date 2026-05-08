@@ -482,13 +482,26 @@ namespace AvaloniaApplication2.Services
                     var hotReloadManager = DependencyInjection.ServiceContainer.GetService<PluginHotReloadManager>();
                     hotReloadManager?.StopWatching(pluginId);
 
-                    plugin.Shutdown();
+                    // P0: try-catch 包裹 Shutdown，防止一个插件失败阻塞卸载
+                    try
+                    {
+                        plugin.Shutdown();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(ex, "插件 Shutdown 失败: {PluginId}", pluginId);
+                    }
+
                     _loadedPlugins.Remove(pluginId);
 
                     if (_pluginContexts.TryGetValue(pluginId, out var context))
                     {
                         context.Unload();
                         _pluginContexts.Remove(pluginId);
+
+                        // P0: 触发 GC 回收 AssemblyLoadContext
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
                     }
 
                     PluginStateChanged?.Invoke(pluginId, PluginStateChange.Unloaded);
@@ -649,11 +662,10 @@ namespace AvaloniaApplication2.Services
         }
 
         /// <summary>
-        /// 删除插件文件
+        /// 删除插件：移动到回收站而非永久删除
         /// </summary>
         public async Task DeletePluginAsync(string pluginId)
         {
-            // 先卸载插件
             UnloadPlugin(pluginId);
 
             var pluginInfo = _pluginInfos.FirstOrDefault(p => p.Id == pluginId);
@@ -661,14 +673,21 @@ namespace AvaloniaApplication2.Services
             {
                 try
                 {
-                    File.Delete(pluginInfo.DllPath);
+                    var recycleDir = Path.Combine(_pluginsDirectory, ".recycle");
+                    Directory.CreateDirectory(recycleDir);
+
+                    var fileName = Path.GetFileName(pluginInfo.DllPath);
+                    var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                    var destPath = Path.Combine(recycleDir, $"{timestamp}_{fileName}");
+
+                    File.Move(pluginInfo.DllPath, destPath);
                     _pluginInfos.Remove(pluginInfo);
-                    
+
                     _settingsService.Settings.EnabledPlugins.Remove(pluginId);
                     await _settingsService.SaveSettingsAsync();
-                    
-                    _logger.Information("插件已删除: {PluginId}", pluginId);
-                    _notificationService.ShowSuccess($"插件已删除: {pluginId}");
+
+                    _logger.Information("插件已移至回收站: {PluginId} -> {Path}", pluginId, destPath);
+                    _notificationService.ShowSuccess($"插件已移至回收站: {pluginId}");
                 }
                 catch (Exception ex)
                 {
@@ -676,6 +695,58 @@ namespace AvaloniaApplication2.Services
                     throw;
                 }
             }
+        }
+
+        /// <summary>
+        /// 获取回收站中的文件列表
+        /// </summary>
+        public string[] GetRecycleBinItems()
+        {
+            var recycleDir = Path.Combine(_pluginsDirectory, ".recycle");
+            if (!Directory.Exists(recycleDir)) return Array.Empty<string>();
+            return Directory.GetFiles(recycleDir, "*.dll", SearchOption.TopDirectoryOnly);
+        }
+
+        /// <summary>
+        /// 从回收站恢复插件
+        /// </summary>
+        public async Task<bool> RestoreFromRecycleBinAsync(string recycleFilePath)
+        {
+            if (!File.Exists(recycleFilePath)) return false;
+
+            var fileName = Path.GetFileName(recycleFilePath);
+            // 文件名格式: yyyyMMdd_HHmmss_originalName.dll
+            var underscoreIdx = fileName.IndexOf('_', 16); // skip timestamp "yyyyMMdd_HHmmss_"
+            var originalName = underscoreIdx >= 0 ? fileName[(underscoreIdx + 1)..] : fileName;
+            var destPath = Path.Combine(_pluginsDirectory, originalName);
+
+            if (File.Exists(destPath))
+            {
+                _notificationService.ShowWarning($"同名 DLL 已存在: {originalName}");
+                return false;
+            }
+
+            File.Move(recycleFilePath, destPath);
+            _notificationService.ShowInfo($"已从回收站恢复: {originalName}");
+            await LoadPluginAsync(destPath);
+            return true;
+        }
+
+        /// <summary>
+        /// 清空回收站
+        /// </summary>
+        public void EmptyRecycleBin()
+        {
+            var recycleDir = Path.Combine(_pluginsDirectory, ".recycle");
+            if (!Directory.Exists(recycleDir)) return;
+
+            foreach (var file in Directory.GetFiles(recycleDir, "*", SearchOption.AllDirectories))
+            {
+                try { File.Delete(file); }
+                catch (Exception ex) { _logger.Error(ex, "清空回收站失败: {File}", file); }
+            }
+
+            _notificationService.ShowInfo("回收站已清空");
         }
     }
 }

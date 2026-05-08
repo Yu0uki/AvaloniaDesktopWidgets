@@ -137,7 +137,6 @@ namespace AvaloniaApplication2.ViewModels
                 plugin.PropertyChanged += OnPluginPropertyChanged;
 
             LoadDashboardData();
-            EnsureDefaultSystemTools();
             UpdateStatistics();
             UpdateGreeting();
             UpdateTime();
@@ -296,27 +295,27 @@ namespace AvaloniaApplication2.ViewModels
         }
 
         /// <summary>
-        /// 确保默认 Windows 系统工具存在于快捷应用中（每次启动时补齐）
+        /// 首次启动时添加默认系统工具（仅当无任何已保存数据时触发）
         /// </summary>
         private void EnsureDefaultSystemTools()
         {
-            var defaults = new (string name, string icon)[]
+            // 仅在无保存数据时才添加默认工具（避免重复叠加）
+            // QuickApps 已有来自 LoadDashboardData 恢复的数据时跳过
+            if (QuickApps.Count > 0) return;
+
+            var defaults = new (string name, string exePath, string icon)[]
             {
-                ("notepad", "📝"),
-                ("powershell", "⌨️"),
-                ("mspaint", "🎨"),
-                ("soundrecorder", "🎤"),
-                ("calc", "🧮"),
-                ("explorer", "📂"),
-                ("ms-settings:", "⚙️"),
+                ("记事本",     "notepad.exe",     "📝"),
+                ("终端",       "powershell.exe",  "⌨️"),
+                ("画图",       "mspaint.exe",     "🎨"),
+                ("计算器",     "calc.exe",        "🧮"),
+                ("文件管理器", "explorer.exe",    "📂"),
+                ("系统设置",   "ms-settings:",    "⚙️"),
             };
 
-            foreach (var (name, icon) in defaults)
+            foreach (var (name, exePath, icon) in defaults)
             {
-                if (!QuickApps.Any(a => a.Name == name))
-                {
-                    QuickApps.Add(new QuickAppInfo { Name = name, Icon = icon });
-                }
+                QuickApps.Add(new QuickAppInfo { Name = name, Icon = icon, ExePath = exePath });
             }
         }
 
@@ -540,15 +539,7 @@ namespace AvaloniaApplication2.ViewModels
 
         // ===== 数据持久化 =====
 
-        private string GetDataFilePath()
-        {
-            var dataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
-            if (!Directory.Exists(dataDir))
-                Directory.CreateDirectory(dataDir);
-            return Path.Combine(dataDir, "dashboard.json");
-        }
-
-        private void SaveDashboardData()
+        private async void SaveDashboardData()
         {
             try
             {
@@ -577,12 +568,8 @@ namespace AvaloniaApplication2.ViewModels
                     }
                 };
 
-                var json = JsonSerializer.Serialize(data, new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
-                File.WriteAllText(GetDataFilePath(), json);
+                var settingsService = DependencyInjection.ServiceContainer.GetRequiredService<SettingsService>();
+                await settingsService.SaveDashboardLayoutAsync(data);
             }
             catch (Exception ex)
             {
@@ -590,27 +577,17 @@ namespace AvaloniaApplication2.ViewModels
             }
         }
 
-        private void LoadDashboardData()
+        private async void LoadDashboardData()
         {
             try
             {
-                var path = GetDataFilePath();
-                if (!File.Exists(path))
-                {
-                    // 首次使用，初始化默认数据
-                    InitializeDefaultData();
-                    return;
-                }
+                var settingsService = DependencyInjection.ServiceContainer.GetRequiredService<SettingsService>();
+                var data = await settingsService.GetDashboardLayoutAsync<DashboardData>();
 
-                var json = File.ReadAllText(path);
-                var data = JsonSerializer.Deserialize<DashboardData>(json, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
-
-                if (data == null)
+                if (data == null || (data.SelectedCity == null && data.TodoItems.Count == 0 && data.QuickApps.Count == 0))
                 {
                     InitializeDefaultData();
+                    EnsureDefaultSystemTools();
                     return;
                 }
 

@@ -149,7 +149,7 @@ namespace WorldClockPlugin.ViewModels
         }
 
         [RelayCommand]
-        private void StartStopwatch()
+        public void StartStopwatch()
         {
             if (!IsStopwatchRunning)
             {
@@ -167,20 +167,20 @@ namespace WorldClockPlugin.ViewModels
         }
 
         [RelayCommand]
-        private void StopStopwatch()
+        public void StopStopwatch()
         {
             IsStopwatchRunning = false;
         }
 
         [RelayCommand]
-        private void ResetStopwatch()
+        public void ResetStopwatch()
         {
             IsStopwatchRunning = false;
             StopwatchTime = TimeSpan.Zero;
         }
 
         [RelayCommand]
-        private void StartTimer()
+        public void StartTimer()
         {
             if (!IsTimerRunning && TimerDuration > TimeSpan.Zero)
             {
@@ -206,13 +206,13 @@ namespace WorldClockPlugin.ViewModels
         }
 
         [RelayCommand]
-        private void StopTimer()
+        public void StopTimer()
         {
             IsTimerRunning = false;
         }
 
         [RelayCommand]
-        private void ResetTimer()
+        public void ResetTimer()
         {
             IsTimerRunning = false;
             TimerTime = TimerDuration;

@@ -80,7 +80,7 @@ namespace NotepadPlugin.ViewModels
         /// 保存设置
         /// </summary>
         [RelayCommand]
-        private void SaveSettings()
+        public void SaveSettings()
         {
             try
             {
@@ -120,7 +120,7 @@ namespace NotepadPlugin.ViewModels
         /// 重置为默认设置
         /// </summary>
         [RelayCommand]
-        private void ResetSettings()
+        public void ResetSettings()
         {
             NotesFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Notes");
             DefaultFontSize = 14.0;
@@ -135,7 +135,7 @@ namespace NotepadPlugin.ViewModels
         /// 选择笔记文件夹
         /// </summary>
         [RelayCommand]
-        private void SelectNotesFolder()
+        public void SelectNotesFolder()
         {
             // 在实际应用中，这里应该打开文件夹选择对话框
             // 由于Avalonia的对话框需要在UI线程中调用，这里简化处理

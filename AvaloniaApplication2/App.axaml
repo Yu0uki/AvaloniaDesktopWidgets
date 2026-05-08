@@ -17,13 +17,43 @@
         <DataTemplate DataType="vm:SettingsViewModel">
             <views:SettingsView/>
         </DataTemplate>
-        
+        <DataTemplate DataType="vm:LogsViewModel">
+            <views:LogsView/>
+        </DataTemplate>
+
         <!-- 保留 ViewLocator 作为备用 -->
         <local:ViewLocator/>
     </Application.DataTemplates>
-  
+
     <Application.Styles>
         <FluentTheme />
+
+        <!-- 全局过渡动画：主题切换 0.3s ease -->
+        <Style Selector="Window">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.3" Easing="SineEaseInOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.3" Easing="SineEaseInOut"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.3" Easing="SineEaseInOut"/>
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.3" Easing="SineEaseInOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="TextBlock">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Foreground" Duration="0:0:0.3" Easing="SineEaseInOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
     </Application.Styles>
 
     <!-- 全局主题样式 -->
@@ -35,8 +65,10 @@
             <converters:IntToBoolConverter x:Key="IntToBoolConverter"/>
             <converters:InvertBoolConverter x:Key="InvertBoolConverter"/>
             <converters:IsPngPathConverter x:Key="IsPngPathConverter"/>
+            <converters:PluginStatusBorderBrushConverter x:Key="PluginStatusBorderBrushConverter"/>
+            <converters:PluginIconConverter x:Key="PluginIconConverter"/>
 
-            <!-- 运行时可变资源（可被主题色修改覆盖） -->
+            <!-- 运行时可变资源 -->
             <SolidColorBrush x:Key="TopBarAccentBorderBrush" Color="#E0E0E0"/>
 
             <ResourceDictionary.ThemeDictionaries>

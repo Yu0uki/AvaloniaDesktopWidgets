@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:AvaloniaApplication2.ViewModels"
              xmlns:conv="clr-namespace:AvaloniaApplication2.Converters"
+             xmlns:core="clr-namespace:AvaloniaApplication2.Core"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
              x:Class="AvaloniaApplication2.Views.DashboardView">
 
@@ -12,7 +13,6 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
-        <!-- 卡片样式 -->
         <Style Selector="Border.card">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
@@ -31,7 +31,6 @@
             <Setter Property="BoxShadow" Value="0 6 16 0 #1A000000"/>
         </Style>
 
-        <!-- 卡片标题图标 + 文字 (匹配原型设计语言) -->
         <Style Selector="TextBlock.card-header-icon">
             <Setter Property="FontSize" Value="18"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -43,7 +42,6 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
-        <!-- 城市选择 ComboBox (匹配原型 select 样式) -->
         <Style Selector="ComboBox.city-selector">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -53,30 +51,25 @@
             <Setter Property="HorizontalAlignment" Value="Left"/>
         </Style>
 
-        <!-- 进度条样式 -->
         <Style Selector="Border.progress-bar">
             <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="Height" Value="6"/>
             <Setter Property="CornerRadius" Value="3"/>
         </Style>
-
         <Style Selector="Border.progress-fill">
             <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
             <Setter Property="Height" Value="6"/>
             <Setter Property="CornerRadius" Value="3"/>
         </Style>
-
         <Style Selector="Border.progress-fill.warning">
             <Setter Property="Background" Value="#D83B01"/>
         </Style>
 
-        <!-- 待办事项完成样式 -->
         <Style Selector="TextBlock.todo-completed">
             <Setter Property="TextDecorations" Value="Strikethrough"/>
             <Setter Property="Opacity" Value="0.6"/>
         </Style>
 
-        <!-- 可点击项目 -->
         <Style Selector="Border.clickable">
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Transitions">
@@ -89,7 +82,6 @@
             <Setter Property="Opacity" Value="0.8"/>
         </Style>
 
-        <!-- 快捷应用项 -->
         <Style Selector="Border.quick-app-item">
             <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
@@ -107,7 +99,6 @@
             <Setter Property="Opacity" Value="0.75"/>
         </Style>
 
-        <!-- 删除按钮 -->
         <Style Selector="Border.delete-btn">
             <Setter Property="CornerRadius" Value="10"/>
             <Setter Property="Width" Value="20"/>
@@ -131,7 +122,6 @@
     <ScrollViewer Padding="32">
         <StackPanel Spacing="24">
 
-            <!-- 问候语和副标题 -->
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Spacing="8">
                     <TextBlock Text="{Binding Greeting, StringFormat='{}{0}，开发者'}"
@@ -140,52 +130,83 @@
                                FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <!-- 重置布局按钮（编辑模式可见） -->
                     <Button IsVisible="{Binding IsEditingLayout}"
-                            Content="↺ 重置布局" Padding="10,6"
+                            Padding="10,6"
                             Background="Transparent" Foreground="#D83B01"
                             CornerRadius="6" BorderBrush="#D83B01" BorderThickness="1"
                             Cursor="Hand"
-                            Command="{Binding ResetLayoutCommand}"/>
-                    <!-- 布局编辑开关 -->
+                            Command="{Binding ResetLayoutCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{x:Static core:FluentIcons.Refresh}" FontFamily="Segoe Fluent Icons" FontSize="14"/>
+                            <TextBlock Text="重置布局"/>
+                        </StackPanel>
+                    </Button>
                     <Button Background="Transparent" BorderThickness="0"
                             Cursor="Hand" VerticalAlignment="Center"
                             Command="{Binding ToggleLayoutEditCommand}">
-                        <TextBlock Text="🔧" FontSize="18"
+                        <TextBlock Text="{x:Static core:FluentIcons.Settings}" FontFamily="Segoe Fluent Icons" FontSize="18"
                                    Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Button>
                 </StackPanel>
             </Grid>
 
-            <!-- 编辑模式：已隐藏卡片恢复面板 -->
             <StackPanel Spacing="8" IsVisible="{Binding IsEditingLayout}" Margin="0,0,0,12">
                 <TextBlock Text="已隐藏的卡片：" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"/>
                 <WrapPanel>
                     <Button Margin="4" IsVisible="{Binding ShowWeatherCard, Converter={StaticResource InvertBoolConverter}}"
-                            Content="🌤 天气" Padding="8,4" CornerRadius="4"
-                            Command="{Binding ToggleCardCommand}" CommandParameter="Weather"/>
+                            Padding="8,4" CornerRadius="4"
+                            Command="{Binding ToggleCardCommand}" CommandParameter="Weather">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{x:Static core:FluentIcons.Weather}" FontFamily="Segoe Fluent Icons" FontSize="14"/>
+                            <TextBlock Text="天气"/>
+                        </StackPanel>
+                    </Button>
                     <Button Margin="4" IsVisible="{Binding ShowQuickAppsCard, Converter={StaticResource InvertBoolConverter}}"
-                            Content="⚡ 快捷应用" Padding="8,4" CornerRadius="4"
-                            Command="{Binding ToggleCardCommand}" CommandParameter="QuickApps"/>
+                            Padding="8,4" CornerRadius="4"
+                            Command="{Binding ToggleCardCommand}" CommandParameter="QuickApps">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{x:Static core:FluentIcons.Lightning}" FontFamily="Segoe Fluent Icons" FontSize="14"/>
+                            <TextBlock Text="快捷应用"/>
+                        </StackPanel>
+                    </Button>
                     <Button Margin="4" IsVisible="{Binding ShowSystemMonitorCard, Converter={StaticResource InvertBoolConverter}}"
-                            Content="⚙️ 系统监控" Padding="8,4" CornerRadius="4"
-                            Command="{Binding ToggleCardCommand}" CommandParameter="SystemMonitor"/>
+                            Padding="8,4" CornerRadius="4"
+                            Command="{Binding ToggleCardCommand}" CommandParameter="SystemMonitor">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{x:Static core:FluentIcons.Computer}" FontFamily="Segoe Fluent Icons" FontSize="14"/>
+                            <TextBlock Text="系统监控"/>
+                        </StackPanel>
+                    </Button>
                     <Button Margin="4" IsVisible="{Binding ShowTodoCard, Converter={StaticResource InvertBoolConverter}}"
-                            Content="✓ 待办事项" Padding="8,4" CornerRadius="4"
-                            Command="{Binding ToggleCardCommand}" CommandParameter="Todo"/>
+                            Padding="8,4" CornerRadius="4"
+                            Command="{Binding ToggleCardCommand}" CommandParameter="Todo">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{x:Static core:FluentIcons.Todo}" FontFamily="Segoe Fluent Icons" FontSize="14"/>
+                            <TextBlock Text="待办事项"/>
+                        </StackPanel>
+                    </Button>
                     <Button Margin="4" IsVisible="{Binding ShowClipboardCard, Converter={StaticResource InvertBoolConverter}}"
-                            Content="📋 剪贴板" Padding="8,4" CornerRadius="4"
-                            Command="{Binding ToggleCardCommand}" CommandParameter="Clipboard"/>
+                            Padding="8,4" CornerRadius="4"
+                            Command="{Binding ToggleCardCommand}" CommandParameter="Clipboard">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{x:Static core:FluentIcons.Clipboard}" FontFamily="Segoe Fluent Icons" FontSize="14"/>
+                            <TextBlock Text="剪贴板"/>
+                        </StackPanel>
+                    </Button>
                     <Button Margin="4" IsVisible="{Binding ShowPluginStatsCard, Converter={StaticResource InvertBoolConverter}}"
-                            Content="📦 插件统计" Padding="8,4" CornerRadius="4"
-                            Command="{Binding ToggleCardCommand}" CommandParameter="PluginStats"/>
+                            Padding="8,4" CornerRadius="4"
+                            Command="{Binding ToggleCardCommand}" CommandParameter="PluginStats">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{x:Static core:FluentIcons.Plugins}" FontFamily="Segoe Fluent Icons" FontSize="14"/>
+                            <TextBlock Text="插件统计"/>
+                        </StackPanel>
+                    </Button>
                 </WrapPanel>
             </StackPanel>
 
-            <!-- 仪表盘卡片网格 -->
             <Grid ColumnDefinitions="*,2*,*" ColumnSpacing="20" RowDefinitions="Auto,Auto,Auto" RowSpacing="20">
 
-                <!-- ========== 时间与天气卡片 ========== -->
+                <!-- 时间与天气卡片 -->
                 <Border Grid.Row="0" Grid.Column="0" Classes="card" IsVisible="{Binding ShowWeatherCard}">
                     <Grid>
                         <StackPanel Spacing="12">
@@ -213,13 +234,13 @@
                     </Grid>
                 </Border>
 
-                <!-- ========== 快捷应用卡片 ========== -->
+                <!-- 快捷应用卡片 -->
                 <Border Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" Classes="card" IsVisible="{Binding ShowQuickAppsCard}">
                     <Grid>
                         <StackPanel Spacing="15">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="⚡" FontSize="18"/>
+                                <TextBlock Text="{x:Static core:FluentIcons.Lightning}" FontFamily="Segoe Fluent Icons" FontSize="18" Foreground="{DynamicResource AccentBrush}"/>
                                 <TextBlock Text="快捷应用" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                             </StackPanel>
                             <Button Grid.Column="1"
@@ -227,11 +248,10 @@
                                     BorderThickness="0"
                                     Cursor="Hand"
                                     Command="{Binding ToggleAddQuickAppCommand}">
-                                <TextBlock Text="✏️" FontSize="18" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <TextBlock Text="{x:Static core:FluentIcons.Todo}" FontFamily="Segoe Fluent Icons" FontSize="18" Foreground="{DynamicResource TextSecondaryBrush}"/>
                             </Button>
                         </Grid>
 
-                        <!-- 添加快捷应用输入框 -->
                         <StackPanel Spacing="8" IsVisible="{Binding IsAddingQuickApp}">
                             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                                 <TextBox Grid.Column="0"
@@ -249,12 +269,14 @@
                                         Command="{Binding SelectQuickAppExeCommand}"
                                         FontSize="13"
                                         Padding="12,6">
-                                    <TextBlock Text="📂 选择程序"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{x:Static core:FluentIcons.Folder}" FontFamily="Segoe Fluent Icons" FontSize="14"/>
+                                        <TextBlock Text="选择程序"/>
+                                    </StackPanel>
                                 </Button>
                             </Grid>
                         </StackPanel>
 
-                        <!-- 快捷应用列表 -->
                         <ItemsControl ItemsSource="{Binding QuickApps}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -266,7 +288,6 @@
                                     <Border Classes="quick-app-item" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="6"
                                             Tapped="OnQuickAppTapped">
                                         <Grid>
-                                            <!-- 删除按钮 -->
                                             <Border Classes="delete-btn"
                                                     HorizontalAlignment="Right"
                                                     VerticalAlignment="Top"
@@ -278,14 +299,12 @@
                                                         Padding="0"
                                                         Command="{Binding $parent[ItemsControl].DataContext.RemoveQuickAppCommand}"
                                                         CommandParameter="{Binding}">
-                                                    <TextBlock Text="✕" FontSize="10" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{x:Static core:FluentIcons.Close}" FontFamily="Segoe Fluent Icons" FontSize="10" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Button>
                                             </Border>
                                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
-                                                <!-- Emoji 图标 -->
                                                 <TextBlock Text="{Binding Icon}" FontSize="24" HorizontalAlignment="Center"
                                                            IsVisible="{Binding Icon, Converter={StaticResource IsPngPathConverter}, ConverterParameter=invert}"/>
-                                                <!-- 提取的 PNG 图标 -->
                                                 <Image Source="{Binding Icon}" Width="28" Height="28"
                                                        IsVisible="{Binding Icon, Converter={StaticResource IsPngPathConverter}}"/>
                                                 <TextBlock Text="{Binding Name}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
@@ -308,12 +327,12 @@
                     </Grid>
                 </Border>
 
-                <!-- ========== 系统监控卡片 ========== -->
+                <!-- 系统监控卡片 -->
                 <Border Grid.Row="0" Grid.Column="2" Classes="card" IsVisible="{Binding ShowSystemMonitorCard}">
                     <Grid>
                         <StackPanel Spacing="12">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="⚙️" FontSize="18"/>
+                            <TextBlock Text="{x:Static core:FluentIcons.Computer}" FontFamily="Segoe Fluent Icons" FontSize="18" Foreground="{DynamicResource AccentBrush}"/>
                             <TextBlock Text="系统监控" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
 
@@ -351,18 +370,17 @@
                     </Grid>
                 </Border>
 
-                <!-- ========== 待办事项卡片 ========== -->
+                <!-- 待办事项卡片 -->
                 <Border Grid.Row="1" Grid.Column="0" Classes="card" IsVisible="{Binding ShowTodoCard}">
                     <Grid>
                     <StackPanel Spacing="12">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="✓" FontSize="18"/>
+                                <TextBlock Text="{x:Static core:FluentIcons.Todo}" FontFamily="Segoe Fluent Icons" FontSize="18" Foreground="{DynamicResource AccentBrush}"/>
                                 <TextBlock Text="待办事项" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Grid>
 
-                        <!-- 添加新待办 -->
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                             <TextBox Grid.Column="0"
                                      Text="{Binding NewTodoText}"
@@ -377,7 +395,6 @@
                             </Button>
                         </Grid>
 
-                        <!-- 待办事项列表 -->
                         <ItemsControl ItemsSource="{Binding TodoItems}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -402,7 +419,7 @@
                                                 Cursor="Hand"
                                                 Command="{Binding $parent[ItemsControl].DataContext.RemoveTodoItemCommand}"
                                                 CommandParameter="{Binding}">
-                                            <TextBlock Text="🗑️" FontSize="13"/>
+                                            <TextBlock Text="{x:Static core:FluentIcons.Delete}" FontFamily="Segoe Fluent Icons" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                         </Button>
                                     </Grid>
                                 </DataTemplate>
@@ -421,12 +438,12 @@
                     </Grid>
                 </Border>
 
-                <!-- ========== 剪贴板历史卡片 ========== -->
+                <!-- 剪贴板历史卡片 -->
                 <Border Grid.Row="1" Grid.Column="2" Classes="card" IsVisible="{Binding ShowClipboardCard}">
                     <Grid>
                     <StackPanel Spacing="12">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="📋" FontSize="18"/>
+                            <TextBlock Text="{x:Static core:FluentIcons.Clipboard}" FontFamily="Segoe Fluent Icons" FontSize="18" Foreground="{DynamicResource AccentBrush}"/>
                             <TextBlock Text="剪贴板历史" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
 
@@ -473,26 +490,26 @@
                     </Grid>
                 </Border>
 
-                <!-- ========== 插件统计卡片 ========== -->
+                <!-- 插件统计卡片 -->
                 <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Classes="card" IsVisible="{Binding ShowPluginStatsCard}">
                     <Grid>
                     <Grid ColumnDefinitions="*,*,*">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                            <TextBlock Text="📦" FontSize="18"/>
+                            <TextBlock Text="{x:Static core:FluentIcons.Plugins}" FontFamily="Segoe Fluent Icons" FontSize="18" Foreground="{DynamicResource AccentBrush}"/>
                             <StackPanel Spacing="4">
                                 <TextBlock Text="插件总数" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                 <TextBlock Text="{Binding TotalPlugins}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                            <TextBlock Text="✅" FontSize="18"/>
+                            <TextBlock Text="{x:Static core:FluentIcons.CheckmarkCircle}" FontFamily="Segoe Fluent Icons" FontSize="18" Foreground="#107C10"/>
                             <StackPanel Spacing="4">
                                 <TextBlock Text="已加载" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                 <TextBlock Text="{Binding LoadedPlugins}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                            <TextBlock Text="⚡" FontSize="18"/>
+                            <TextBlock Text="{x:Static core:FluentIcons.Lightning}" FontFamily="Segoe Fluent Icons" FontSize="18" Foreground="{DynamicResource AccentBrush}"/>
                             <StackPanel Spacing="4">
                                 <TextBlock Text="已启用" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                 <TextBlock Text="{Binding EnabledPlugins}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>

@@ -1,7 +1,8 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using AvaloniaApplication2.Core;
 using AvaloniaApplication2.DependencyInjection;
 using AvaloniaApplication2.Infrastructure;
+using AvaloniaApplication2.Models;
 using AvaloniaApplication2.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -19,8 +20,8 @@ namespace AvaloniaApplication2.ViewModels
         private readonly SettingsService _settingsService;
         private readonly NotificationService _notificationService;
         private readonly ILogger _logger;
+        private int _unreadCount;
 
-        // 窗口控制事件
         public event EventHandler? WindowMinimizeRequested;
         public event EventHandler<WindowStateEventArgs>? WindowMaximizeRequested;
         public event EventHandler? WindowCloseRequested;
@@ -58,11 +59,25 @@ namespace AvaloniaApplication2.ViewModels
         [ObservableProperty]
         private string searchQuery = "";
 
-        // 已启动的插件列表（用于导航栏显示）
-        public ObservableCollection<PluginInfo> RunningPlugins { get; }
+        // 通知中心
+        [ObservableProperty]
+        private bool isNotificationCenterOpen = false;
 
-        // 通知集合
+        [ObservableProperty]
+        private string notificationSummary = "";
+
+        [ObservableProperty]
+        private bool hasUnreadNotifications = false;
+
+        [ObservableProperty]
+        private int unreadNotificationCount = 0;
+
+        // 最大化图标：根据 IsMaximized 状态动态切换
+        public string MaximizeIcon => IsMaximized ? FluentIcons.Restore : FluentIcons.Maximize;
+
+        public ObservableCollection<PluginInfo> RunningPlugins { get; }
         public ObservableCollection<NotificationMessage> Notifications => _notificationService.Notifications;
+        public ObservableCollection<NotificationLogEntry> NotificationHistory { get; } = new();
 
         public event EventHandler? FocusSearchRequested;
 
@@ -73,55 +88,83 @@ namespace AvaloniaApplication2.ViewModels
             _notificationService = NotificationService.Instance;
             _logger = LoggingConfig.Logger.ForContext<MainWindowViewModel>();
 
-            // 初始化运行插件列表
             RunningPlugins = new ObservableCollection<PluginInfo>();
-            
-            // 订阅插件状态改变事件
+
             _pluginManager.PluginStateChanged += OnPluginStateChanged;
 
-            // 默认显示仪表盘
             CurrentPage = new DashboardViewModel(_pluginManager);
-            
+
+            foreach (var entry in _settingsService.Settings.NotificationLog.Take(50))
+                NotificationHistory.Add(entry);
+            UpdateNotificationSummary();
+
+            _notificationService.NotificationAdded += OnNotificationAdded;
+
             _logger.Information("MainWindowViewModel 已初始化");
         }
 
-        /// <summary>
-        /// 处理插件状态改变
-        /// </summary>
+        partial void OnIsMaximizedChanged(bool value)
+        {
+            OnPropertyChanged(nameof(MaximizeIcon));
+        }
+
+        private async void OnNotificationAdded(object? sender, NotificationMessage e)
+        {
+            _unreadCount++;
+            UnreadNotificationCount = _unreadCount;
+            HasUnreadNotifications = _unreadCount > 0;
+
+            await _settingsService.AddNotificationLogAsync(e.Message, e.Type.ToString());
+            NotificationHistory.Insert(0, new NotificationLogEntry
+            {
+                Message = e.Message,
+                Type = e.Type.ToString(),
+                Timestamp = e.Timestamp
+            });
+            while (NotificationHistory.Count > 50)
+                NotificationHistory.RemoveAt(NotificationHistory.Count - 1);
+            UpdateNotificationSummary();
+        }
+
+        private void UpdateNotificationSummary()
+        {
+            var errors = NotificationHistory.Count(e => e.Type == "Error");
+            var warnings = NotificationHistory.Count(e => e.Type == "Warning");
+            var successes = NotificationHistory.Count(e => e.Type == "Success");
+
+            var parts = new System.Collections.Generic.List<string>();
+            if (errors > 0) parts.Add($"{errors} 个错误");
+            if (warnings > 0) parts.Add($"{warnings} 个警告");
+            if (successes > 0) parts.Add($"{successes} 条成功");
+            NotificationSummary = parts.Count > 0 ? "今日: " + string.Join("，", parts) : "暂无新消息";
+        }
+
+        public async Task SaveWindowPositionAsync(double x, double y)
+        {
+            await _settingsService.UpdateWindowPositionAsync(x, y);
+        }
+
         private void OnPluginStateChanged(string pluginId, Services.PluginStateChange stateChange)
         {
             switch (stateChange)
             {
                 case Services.PluginStateChange.Started:
-                    // 添加到运行列表
                     var startedPluginInfo = _pluginManager.PluginInfos.FirstOrDefault(p => p.Id == pluginId);
                     if (startedPluginInfo != null && !RunningPlugins.Any(p => p.Id == pluginId))
-                    {
                         RunningPlugins.Add(startedPluginInfo);
-                    }
                     break;
-                    
+
                 case Services.PluginStateChange.Stopped:
                 case Services.PluginStateChange.Unloaded:
-                    // 从运行列表中移除
                     var pluginInfo = RunningPlugins.FirstOrDefault(p => p.Id == pluginId);
                     if (pluginInfo != null)
-                    {
                         RunningPlugins.Remove(pluginInfo);
-                    }
-                    
-                    // 如果当前显示的是该插件，则返回仪表盘
                     if (SelectedPluginId == pluginId)
-                    {
                         NavigateBackToDashboard();
-                    }
                     break;
             }
         }
 
-        /// <summary>
-        /// 导航到仪表盘
-        /// </summary>
         [RelayCommand]
         private void NavigateToDashboard()
         {
@@ -129,9 +172,6 @@ namespace AvaloniaApplication2.ViewModels
             CurrentPage = new DashboardViewModel(_pluginManager);
         }
 
-        /// <summary>
-        /// 导航到插件管理器
-        /// </summary>
         [RelayCommand]
         public void NavigateToPluginManager()
         {
@@ -139,9 +179,6 @@ namespace AvaloniaApplication2.ViewModels
             CurrentPage = new PluginManagerViewModel(_pluginManager);
         }
 
-        /// <summary>
-        /// 导航到设置页面
-        /// </summary>
         [RelayCommand]
         private void NavigateToSettings()
         {
@@ -149,59 +186,78 @@ namespace AvaloniaApplication2.ViewModels
             CurrentPage = new SettingsViewModel(_settingsService);
         }
 
-        /// <summary>
-        /// 最小化窗口
-        /// </summary>
+        [RelayCommand]
+        private void NavigateToLogsPage()
+        {
+            SelectedNavIndex = 3;
+            CurrentPage = new LogsViewModel(_settingsService);
+        }
+
+        [RelayCommand]
+        private void NavigateToLogs()
+        {
+            // 从通知中心点击后导航到独立的日志页面
+            IsNotificationCenterOpen = false;
+            NavigateToLogsPage();
+        }
+
         [RelayCommand]
         private void MinimizeWindow()
         {
-            // 通过事件通知视图进行最小化操作
             WindowMinimizeRequested?.Invoke(this, EventArgs.Empty);
         }
 
-        /// <summary>
-        /// 最大化/还原窗口
-        /// </summary>
         [RelayCommand]
         private void ToggleMaximize()
         {
             IsMaximized = !IsMaximized;
-            // 通过事件通知视图进行最大化/还原操作
             WindowMaximizeRequested?.Invoke(this, new WindowStateEventArgs(IsMaximized));
         }
 
-        /// <summary>
-        /// 关闭窗口
-        /// </summary>
         [RelayCommand]
         private void CloseWindow()
         {
-            // 通过事件通知视图进行关闭操作
             WindowCloseRequested?.Invoke(this, EventArgs.Empty);
         }
 
-        /// <summary>
-        /// 显示插件视图
-        /// </summary>
+        // ===== 通知中心 =====
+
+        [RelayCommand]
+        private void ToggleNotificationCenter()
+        {
+            IsNotificationCenterOpen = !IsNotificationCenterOpen;
+            if (IsNotificationCenterOpen)
+            {
+                // 标记所有通知为已读
+                _unreadCount = 0;
+                UnreadNotificationCount = 0;
+                HasUnreadNotifications = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task ClearNotifications()
+        {
+            NotificationHistory.Clear();
+            _notificationService.ClearNotifications();
+            await _settingsService.ClearNotificationLogAsync();
+            _unreadCount = 0;
+            UnreadNotificationCount = 0;
+            HasUnreadNotifications = false;
+            UpdateNotificationSummary();
+        }
+
+        // ===== 插件导航 =====
+
         public void ShowPluginView(string pluginId, string pluginName, Control pluginView)
         {
-            _logger.Information("显示插件视图: {PluginName}, 控件类型: {ControlType}", 
-                pluginName, pluginView.GetType().FullName);
-            
             StatusMessage = $"正在运行: {pluginName}";
             CurrentPluginName = pluginName;
             SelectedPluginId = pluginId;
             IsShowingPluginView = true;
             CurrentPage = pluginView;
-            
-            // 注意：RunningPlugins的添加由OnPluginStateChanged事件处理，避免重复添加
-            
-            _logger.Information("CurrentPage 已设置为: {PageType}", CurrentPage?.GetType().FullName);
         }
 
-        /// <summary>
-        /// 导航到指定插件
-        /// </summary>
         [RelayCommand]
         private void NavigateToPlugin(string pluginId)
         {
@@ -212,26 +268,18 @@ namespace AvaloniaApplication2.ViewModels
                 {
                     _pluginManager.StartPlugin(pluginId);
                     _pluginManager.ActivatePlugin(pluginId);
-                    
+
                     var mainView = plugin.GetMainView();
                     if (mainView != null)
                     {
-                        // 创建插件包装器视图模型
                         var wrapperVM = new PluginWrapperViewModel(
-                            pluginId,
-                            plugin.Name,
-                            mainView,
-                            plugin,  // 传递 IPlugin 实例
-                            this
-                        );
-                        
-                        // 创建包装器视图
+                            pluginId, plugin.Name, mainView, plugin, this);
+
                         var wrapperView = new Views.PluginWrapperView
                         {
                             DataContext = wrapperVM
                         };
-                        
-                        // 显示插件视图（使用包装器）
+
                         ShowPluginView(pluginId, plugin.Name, wrapperView);
                     }
                 }
@@ -243,26 +291,24 @@ namespace AvaloniaApplication2.ViewModels
             }
         }
 
-        /// <summary>
-        /// 关闭插件视图
-        /// </summary>
         [RelayCommand]
         public void ClosePluginView(string pluginId)
         {
             try
             {
+                if (CurrentPage is Views.PluginWrapperView wrapperView &&
+                    wrapperView.DataContext is PluginWrapperViewModel wrapperVM)
+                {
+                    wrapperVM.Dispose();
+                }
+
                 _pluginManager.StopPlugin(pluginId);
-                
-                // 从运行列表中移除
+
                 var pluginInfo = RunningPlugins.FirstOrDefault(p => p.Id == pluginId);
                 if (pluginInfo != null)
-                {
                     RunningPlugins.Remove(pluginInfo);
-                }
-                
-                // 返回仪表盘
+
                 NavigateBackToDashboard();
-                
                 _notificationService.ShowInfo("插件已关闭");
             }
             catch (Exception ex)
@@ -271,9 +317,6 @@ namespace AvaloniaApplication2.ViewModels
             }
         }
 
-        /// <summary>
-        /// 打开插件为独立窗口
-        /// </summary>
         public async Task OpenPluginAsWindowAsync(string pluginId)
         {
             try
@@ -282,22 +325,27 @@ namespace AvaloniaApplication2.ViewModels
                 if (plugin != null)
                 {
                     var pluginView = plugin.GetMainView();
-                    
-                    // 创建新窗口
+
+                    var pluginWindowVM = new PluginWindowViewModel
+                    {
+                        PluginId = pluginId,
+                        PluginName = plugin.Name,
+                        PluginContent = pluginView,
+                        MainWindowVM = this
+                    };
+
                     var pluginWindow = new Views.PluginWindow
                     {
-                        DataContext = new ViewModels.PluginWindowViewModel
-                        {
-                            PluginId = pluginId,
-                            PluginName = plugin.Name,
-                            PluginContent = pluginView,
-                            MainWindowVM = this
-                        }
+                        DataContext = pluginWindowVM
                     };
-                    
-                    // 显示窗口
+
+                    pluginWindow.Closed += (s, e) =>
+                    {
+                        _pluginManager.DeactivatePlugin(pluginId);
+                        pluginWindowVM.Dispose();
+                    };
+
                     pluginWindow.Show();
-                    
                     _notificationService.ShowSuccess($"已在独立窗口中打开: {plugin.Name}");
                 }
             }
@@ -308,36 +356,19 @@ namespace AvaloniaApplication2.ViewModels
             }
         }
 
-        /// <summary>
-        /// 显示插件设置视图
-        /// </summary>
         public void ShowPluginSettingsView(string pluginId, string pluginName, Control settingsView)
         {
             try
             {
-                _logger.Information("显示插件设置: {PluginName}", pluginName);
-                
-                // 创建包装器视图模型（使用设置视图）
                 var wrapperVM = new PluginWrapperViewModel(
-                    pluginId,
-                    $"{pluginName} - 设置",
-                    settingsView,
-                    null,  // 设置视图不需要 IPlugin 实例
-                    this
-                );
-                
-                // 创建包装器视图
-                var wrapperView = new Views.PluginWrapperView
-                {
-                    DataContext = wrapperVM
-                };
-                
-                // 显示设置视图
+                    pluginId, $"{pluginName} - 设置", settingsView, null, this);
+
+                var wrapperView = new Views.PluginWrapperView { DataContext = wrapperVM };
+
                 IsShowingPluginView = true;
                 CurrentPluginName = $"{pluginName} - 设置";
                 SelectedPluginId = pluginId;
                 CurrentPage = wrapperView;
-                
                 StatusMessage = $"正在配置: {pluginName}";
             }
             catch (Exception ex)
@@ -347,35 +378,21 @@ namespace AvaloniaApplication2.ViewModels
             }
         }
 
-        /// <summary>
-        /// 返回仪表盘
-        /// </summary>
         [RelayCommand]
         private void NavigateBackToDashboard()
         {
-            _logger.Information("返回仪表盘");
-            
-            // ⭐ 关键修复：先清除 CurrentPage，让 Avalonia 从 Visual Tree 中移除插件视图
             CurrentPage = null;
-            
             IsShowingPluginView = false;
             CurrentPluginName = "";
             SelectedPluginId = null;
             StatusMessage = "";
-            
-            // 然后设置新的页面
             NavigateToDashboard();
         }
 
-
-        /// <summary>
-        /// 网页搜索：打开默认浏览器搜索
-        /// </summary>
         [RelayCommand]
         private void WebSearch()
         {
             if (string.IsNullOrWhiteSpace(SearchQuery)) return;
-
             try
             {
                 var encoded = Uri.EscapeDataString(SearchQuery.Trim());
@@ -385,7 +402,6 @@ namespace AvaloniaApplication2.ViewModels
                     FileName = url,
                     UseShellExecute = true
                 });
-                _logger.Information("网页搜索: {Query}", SearchQuery);
                 _notificationService.ShowInfo($"正在搜索: {SearchQuery}");
             }
             catch (Exception ex)
@@ -395,37 +411,21 @@ namespace AvaloniaApplication2.ViewModels
             }
         }
 
-        /// <summary>
-        /// 聚焦搜索框
-        /// </summary>
         [RelayCommand]
-        private void FocusSearch()
-        {
-            _logger.Information("聚焦搜索框 (Ctrl+K)");
-        }
+        private void FocusSearch() { }
 
-        /// <summary>
-        /// 切换侧边栏展开/折叠状态
-        /// </summary>
         [RelayCommand]
-        private void ToggleSidebar()
+        private async Task ToggleSidebar()
         {
             IsSidebarExpanded = !IsSidebarExpanded;
             SidebarWidth = IsSidebarExpanded ? "220" : "64";
-            _logger.Information("侧边栏{State}", IsSidebarExpanded ? "展开" : "折叠");
+            await _settingsService.UpdateSidebarLayoutAsync(IsSidebarExpanded, double.Parse(SidebarWidth));
         }
     }
 
-    /// <summary>
-    /// 窗口状态事件参数
-    /// </summary>
     public class WindowStateEventArgs : EventArgs
     {
         public bool IsMaximized { get; }
-
-        public WindowStateEventArgs(bool isMaximized)
-        {
-            IsMaximized = isMaximized;
-        }
+        public WindowStateEventArgs(bool isMaximized) => IsMaximized = isMaximized;
     }
 }

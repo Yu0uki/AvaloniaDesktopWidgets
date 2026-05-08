@@ -24,66 +24,83 @@ namespace AvaloniaApplication2
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                // 禁用重复的数据验证
                 DisableAvaloniaDataAnnotationValidation();
 
-                // 初始化依赖注入容器
                 ServiceContainer.ConfigureServices();
 
-                // 从容器获取服务
                 var settingsService = ServiceContainer.GetRequiredService<SettingsService>();
                 var pluginManager = ServiceContainer.GetRequiredService<PluginManager>();
 
-                // 应用保存的主题设置
                 ApplySavedTheme(settingsService.Settings.Theme);
-
-                // 应用已保存的主题色
                 ApplySavedAccentColor(settingsService.Settings.AccentColorIndex);
 
-                // 创建主窗口 ViewModel（从容器获取）
                 var mainWindowViewModel = ServiceContainer.GetRequiredService<MainWindowViewModel>();
 
-                // 创建主窗口
                 var mainWindow = new MainWindow
                 {
                     DataContext = mainWindowViewModel
                 };
 
+                // 恢复窗口位置
+                if (settingsService.Settings.WindowX.HasValue && settingsService.Settings.WindowY.HasValue)
+                {
+                    mainWindow.Position = new PixelPoint(
+                        (int)settingsService.Settings.WindowX.Value,
+                        (int)settingsService.Settings.WindowY.Value);
+                }
+
+                // 恢复侧边栏状态
+                mainWindowViewModel.IsSidebarExpanded = settingsService.Settings.SidebarExpanded;
+                mainWindowViewModel.SidebarWidth = settingsService.Settings.SidebarWidth.ToString();
+
                 desktop.MainWindow = mainWindow;
 
-                // 注册退出事件
+                // 退出时保存窗口位置和侧边栏状态
                 desktop.Exit += OnApplicationExit;
 
-                // 异步加载插件
+                // 启动日志记录
+                var notify = NotificationService.Instance;
+                notify.ShowInfo("应用程序启动");
+                notify.ShowInfo($"插件目录: {pluginManager.PluginsDirectory}");
+
                 _ = pluginManager.LoadPluginsAsync();
 
                 Log.Information("应用程序启动完成");
+                notify.ShowSuccess("应用程序启动完成");
             }
 
             base.OnFrameworkInitializationCompleted();
         }
 
-        /// <summary>
-        /// 应用程序退出处理
-        /// </summary>
-        private void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+        private async void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
         {
             Log.Information("应用程序正在退出...");
-            
-            // 停止所有插件热重载监视
+
             var hotReloadManager = ServiceContainer.GetService<PluginHotReloadManager>();
             hotReloadManager?.StopAllWatching();
 
-            // 停止 Plugins 文件夹监视
             var pluginManager = ServiceContainer.GetService<PluginManager>();
             pluginManager?.StopFolderWatcher();
+
+            // 保存窗口位置和侧边栏状态
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
+                desktop.MainWindow is { } window)
+            {
+                var settingsService = ServiceContainer.GetService<SettingsService>();
+                if (settingsService != null)
+                {
+                    await settingsService.UpdateWindowPositionAsync(
+                        window.Position.X,
+                        window.Position.Y);
+                    await settingsService.UpdateSidebarLayoutAsync(
+                        (window.DataContext as MainWindowViewModel)?.IsSidebarExpanded ?? false,
+                        double.TryParse((window.DataContext as MainWindowViewModel)?.SidebarWidth, out var w) ? w : 64);
+                }
+            }
 
             ServiceContainer.Shutdown();
         }
 
-        /// <summary>
-        /// 应用保存的主题设置
-        /// </summary>
         private void ApplySavedTheme(string theme)
         {
             var themeVariant = theme.ToLower() switch
@@ -91,15 +108,12 @@ namespace AvaloniaApplication2
                 "light" => Avalonia.Styling.ThemeVariant.Light,
                 "dark" => Avalonia.Styling.ThemeVariant.Dark,
                 "system" => Avalonia.Styling.ThemeVariant.Default,
-                _ => Avalonia.Styling.ThemeVariant.Light // 默认浅色主题
+                _ => Avalonia.Styling.ThemeVariant.Light
             };
 
             RequestedThemeVariant = themeVariant;
         }
 
-        /// <summary>
-        /// 启动时应用已保存的主题色
-        /// </summary>
         private static void ApplySavedAccentColor(int accentColorIndex)
         {
             var accentColors = new[]

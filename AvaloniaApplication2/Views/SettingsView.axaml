@@ -3,7 +3,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="700"
-             x:Class="AvaloniaApplication2.Views.SettingsView">
+             x:Class="AvaloniaApplication2.Views.SettingsView"
+             xmlns:core="clr-namespace:AvaloniaApplication2.Core">
 
     <UserControl.Styles>
         <!-- 设置分类标签页按钮 -->
@@ -37,12 +38,10 @@
             <Setter Property="BoxShadow" Value="0 2 8 0 #0A000000"/>
         </Style>
 
-        <!-- ToggleSwitch 样式 -->
         <Style Selector="ToggleSwitch">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         </Style>
 
-        <!-- 设置分区标题（顶部留出足够空间确保锚点导航时不被遮挡） -->
         <Style Selector="TextBlock.section-header">
             <Setter Property="FontSize" Value="18"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -50,7 +49,6 @@
             <Setter Property="Margin" Value="0,48,0,16"/>
         </Style>
 
-        <!-- "即将推出"标签 -->
         <Style Selector="Border.coming-soon-badge">
             <Setter Property="Background" Value="#E8E8E8"/>
             <Setter Property="CornerRadius" Value="4"/>
@@ -62,10 +60,9 @@
         </Style>
     </UserControl.Styles>
 
-    <!-- 顶层布局：固定顶部标签栏 + 可滚动内容 -->
     <Grid RowDefinitions="Auto,*">
 
-        <!-- ===== 顶部固定标签栏（独立底色区） ===== -->
+        <!-- 顶部固定标签栏 -->
         <Border Grid.Row="0" Background="{DynamicResource CardBackgroundBrush}"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
@@ -78,19 +75,16 @@
             </StackPanel>
         </Border>
 
-        <!-- ===== 可滚动内容区 ===== -->
+        <!-- 可滚动内容区 -->
         <ScrollViewer Grid.Row="1" x:Name="SettingsScrollViewer">
             <StackPanel MaxWidth="960" HorizontalAlignment="Center" Margin="40,0,40,60" Spacing="0">
 
-                <!-- ===== 页面大标题 ===== -->
                 <StackPanel Margin="0,20,0,40">
                     <TextBlock Text="设置" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
                     <TextBlock Text="{Binding StatusMessage}" FontSize="13" Foreground="#107C10"/>
                 </StackPanel>
 
-            <!-- ============================================ -->
-            <!-- 通用设置 -->
-            <!-- ============================================ -->
+            <!-- ===== 通用设置 ===== -->
             <TextBlock x:Name="GeneralSectionHeader" Text="通用设置" Classes="section-header"/>
 
             <StackPanel Spacing="8">
@@ -98,7 +92,7 @@
                 <!-- 自动加载插件 -->
                 <Border Classes="setting-card">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="🔌" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.AutoLoad}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="启动时自动加载插件" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <TextBlock Text="应用程序启动时自动加载 Plugins 目录中的所有插件" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
@@ -110,7 +104,7 @@
                 <!-- 插件目录 -->
                 <Border Classes="setting-card">
                     <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" RowSpacing="10">
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="📁" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{x:Static core:FluentIcons.Folder}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="插件目录" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <TextBlock Text="指定插件 DLL 文件的存放位置" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
@@ -127,17 +121,14 @@
 
             </StackPanel>
 
-            <!-- ============================================ -->
-            <!-- 界面设置 -->
-            <!-- ============================================ -->
+            <!-- ===== 界面设置 ===== -->
             <TextBlock x:Name="AppearanceSectionHeader" Text="界面设置" Classes="section-header"/>
 
             <StackPanel Spacing="8">
 
-                <!-- 启动时默认打开页面 -->
                 <Border Classes="setting-card">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="🖥️" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Computer}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="启动时默认打开页面" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </StackPanel>
@@ -152,10 +143,9 @@
                     </Grid>
                 </Border>
 
-                <!-- 主题 -->
                 <Border Classes="setting-card">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="🌓" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Brightness}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="主题" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <TextBlock Text="设置程序的主题风格（深色 / 浅色 / 跟随系统）" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
@@ -171,10 +161,9 @@
                     </Grid>
                 </Border>
 
-                <!-- 主题色 -->
                 <Border Classes="setting-card">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="🎨" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Palette}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="主题色" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <TextBlock Text="设置程序中显示的强调色" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
@@ -183,19 +172,18 @@
                                   Background="{DynamicResource SearchBoxBackgroundBrush}"
                                   BorderBrush="{DynamicResource BorderBrush}"
                                   CornerRadius="6" Padding="12,6" MinWidth="180">
-                            <ComboBoxItem Content="🔵 默认蓝"/>
-                            <ComboBoxItem Content="🟢 翠绿"/>
-                            <ComboBoxItem Content="🟣 紫色"/>
-                            <ComboBoxItem Content="🟠 橙色"/>
-                            <ComboBoxItem Content="🔴 红色"/>
+                            <ComboBoxItem Content="默认蓝"/>
+                            <ComboBoxItem Content="翠绿"/>
+                            <ComboBoxItem Content="紫色"/>
+                            <ComboBoxItem Content="橙色"/>
+                            <ComboBoxItem Content="红色"/>
                         </ComboBox>
                     </Grid>
                 </Border>
 
-                <!-- 语言 -->
                 <Border Classes="setting-card">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="🌐" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Language}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="语言" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <TextBlock Text="设置程序首选的显示语言" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
@@ -211,10 +199,9 @@
                     </Grid>
                 </Border>
 
-                <!-- 背景不透明度 -->
                 <Border Classes="setting-card">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="🔆" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Brightness}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="背景不透明度" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <TextBlock Text="{Binding BackgroundOpacity, StringFormat='当前值: {0:F0}%'}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
@@ -224,10 +211,9 @@
                     </Grid>
                 </Border>
 
-                <!-- 自定义背景图片 -->
                 <Border Classes="setting-card">
                     <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" RowSpacing="10">
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="🖼️" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{x:Static core:FluentIcons.Image}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="自定义背景图片" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <TextBlock Text="使用自定义图片作为窗口背景" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
@@ -248,16 +234,14 @@
 
             </StackPanel>
 
-            <!-- ============================================ -->
-            <!-- 插件设置 -->
-            <!-- ============================================ -->
+            <!-- ===== 插件设置 ===== -->
             <TextBlock x:Name="PluginSectionHeader" Text="插件设置" Classes="section-header"/>
 
             <StackPanel Spacing="8">
 
                 <Border Classes="setting-card">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="📦" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Security}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="插件安全检测" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
@@ -273,7 +257,7 @@
 
                 <Border Classes="setting-card">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="🔄" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.AutoUpdate}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="自动更新插件" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
@@ -289,16 +273,14 @@
 
             </StackPanel>
 
-            <!-- ============================================ -->
-            <!-- 高级设置 -->
-            <!-- ============================================ -->
+            <!-- ===== 高级设置 ===== -->
             <TextBlock x:Name="AdvancedSectionHeader" Text="高级设置" Classes="section-header"/>
 
             <StackPanel Spacing="8">
 
                 <Border Classes="setting-card">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="🔧" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Hardware}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="硬件加速" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
@@ -312,10 +294,9 @@
                     </Grid>
                 </Border>
 
-                <!-- 清除缓存数据（含自定义目录） -->
                 <Border Classes="setting-card">
                     <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" RowSpacing="10">
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="🗑️" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{x:Static core:FluentIcons.Cache}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="清除缓存数据" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <TextBlock Text="清除所有本地缓存和临时文件" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
@@ -336,9 +317,7 @@
 
             </StackPanel>
 
-            <!-- ============================================ -->
-            <!-- 关于 -->
-            <!-- ============================================ -->
+            <!-- ===== 关于 ===== -->
             <TextBlock x:Name="AboutSectionHeader" Text="关于" Classes="section-header"/>
 
             <StackPanel Spacing="8">
