@@ -257,15 +257,10 @@
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <TextBlock Grid.Column="0" Text="{x:Static core:FluentIcons.Security}" FontFamily="Segoe Fluent Icons" FontSize="24" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="插件安全检测" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                <Border Classes="coming-soon-badge" VerticalAlignment="Center">
-                                    <TextBlock Text="即将推出" Classes="coming-soon-text"/>
-                                </Border>
-                            </StackPanel>
-                            <TextBlock Text="加载插件前进行安全扫描" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="插件安全检测" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="加载插件前进行模式匹配安全扫描，检测危险 API 调用" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         </StackPanel>
-                        <ToggleSwitch Grid.Column="2" IsChecked="True" IsEnabled="False" VerticalAlignment="Center"/>
+                        <ToggleSwitch Grid.Column="2" IsChecked="{Binding EnableSecurityScan}" VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
 

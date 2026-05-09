@@ -1,4 +1,4 @@
-$version = "4.0.1"
+$version = "5.0.1"
 $output = "publish/release-$version"
 $project = "AvaloniaApplication2/AvaloniaApplication2.csproj"
 

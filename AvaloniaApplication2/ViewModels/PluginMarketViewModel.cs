@@ -277,7 +277,26 @@ namespace AvaloniaApplication2.ViewModels
 
             try
             {
-                var dllBytes = await _httpClient.GetByteArrayAsync(plugin.DownloadUrl);
+                byte[]? dllBytes = null;
+                try
+                {
+                    dllBytes = await _httpClient.GetByteArrayAsync(plugin.DownloadUrl);
+                }
+                catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    // 尝试替换 Plugin.dll ↔ .dll 的命名差异
+                    var altUrl = plugin.DownloadUrl.Contains("Plugin.dll")
+                        ? plugin.DownloadUrl.Replace("Plugin.dll", ".dll")
+                        : plugin.DownloadUrl.Replace(".dll", "Plugin.dll");
+                    if (altUrl != plugin.DownloadUrl)
+                    {
+                        StatusMessage = $"尝试备用链接...";
+                        dllBytes = await _httpClient.GetByteArrayAsync(altUrl);
+                    }
+                    else throw;
+                }
+
+                if (dllBytes == null) return;
                 notify.ShowInfo($"{plugin.Name} 下载完成 ({dllBytes.Length / 1024}KB)，正在安装...");
 
                 var pluginsDir = _pluginManager.PluginsDirectory;

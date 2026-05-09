@@ -338,6 +338,22 @@ namespace AvaloniaApplication2.Services
             {
                 _logger.Information("开始加载插件: {Path}", dllPath);
 
+                // 安全检查
+                var security = DependencyInjection.ServiceContainer.GetService<PluginSecurityService>();
+                if (security?.Enabled == true)
+                {
+                    var scan = security.ScanDll(dllPath);
+                    _logger.Information("安全检查: {File} 风险等级={Risk}, SHA256={Hash}",
+                        scan.FileName, scan.RiskLevel, scan.FileHash[..16]);
+                    if (scan.Warnings.Count > 0)
+                    {
+                        foreach (var w in scan.Warnings)
+                            _logger.Warning("  {Warning}", w);
+                    }
+                    if (scan.RiskLevel == "高")
+                        _notificationService.ShowWarning($"安全警告: {scan.FileName} 风险等级{scan.RiskLevel}");
+                }
+
                 // 创建隔离的加载上下文
                 var context = new PluginLoadContext(dllPath);
                 Assembly assembly;
@@ -743,15 +759,44 @@ namespace AvaloniaApplication2.Services
         public void EmptyRecycleBin()
         {
             var recycleDir = Path.Combine(_pluginsDirectory, ".recycle");
-            if (!Directory.Exists(recycleDir)) return;
-
-            foreach (var file in Directory.GetFiles(recycleDir, "*", SearchOption.AllDirectories))
+            if (!Directory.Exists(recycleDir))
             {
-                try { File.Delete(file); }
-                catch (Exception ex) { _logger.Error(ex, "清空回收站失败: {File}", file); }
+                _notificationService.ShowInfo("回收站为空");
+                return;
             }
 
-            _notificationService.ShowInfo("回收站已清空");
+            var files = Directory.GetFiles(recycleDir, "*", SearchOption.AllDirectories);
+            if (files.Length == 0)
+            {
+                _notificationService.ShowInfo("回收站为空");
+                return;
+            }
+
+            var deleted = 0;
+            var failed = 0;
+            foreach (var file in files)
+            {
+                try
+                {
+                    // 先清除只读属性（防止 File.Delete 失败）
+                    var attrs = File.GetAttributes(file);
+                    if ((attrs & FileAttributes.ReadOnly) != 0)
+                        File.SetAttributes(file, attrs & ~FileAttributes.ReadOnly);
+
+                    File.Delete(file);
+                    deleted++;
+                }
+                catch (Exception ex)
+                {
+                    failed++;
+                    _logger.Error(ex, "清空回收站失败: {File}", file);
+                }
+            }
+
+            if (failed == 0)
+                _notificationService.ShowSuccess($"回收站已清空 ({deleted} 个文件)");
+            else
+                _notificationService.ShowWarning($"已删除 {deleted} 个，{failed} 个文件无法删除（可能被占用）");
         }
     }
 }

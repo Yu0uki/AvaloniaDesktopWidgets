@@ -73,9 +73,14 @@ namespace AvaloniaApplication2.ViewModels
         [RelayCommand]
         private void EmptyRecycleBin()
         {
+            RecycleBinItems.Clear();
             _pluginManager.EmptyRecycleBin();
-            RefreshRecycleBin();
-            StatusMessage = "回收站已清空";
+            // 重新扫描以确认状态（文件被占用时可能仍有残留）
+            foreach (var item in _pluginManager.GetRecycleBinItems())
+                RecycleBinItems.Add(item);
+            StatusMessage = RecycleBinItems.Count > 0
+                ? $"回收站: {RecycleBinItems.Count} 个文件（部分文件可能被占用）"
+                : "回收站已清空";
         }
 
         /// <summary>

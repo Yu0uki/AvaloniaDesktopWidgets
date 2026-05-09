@@ -12,7 +12,12 @@
       "Bash(mv temp/* .)",
       "Bash(rmdir temp *)",
       "Bash(mkdir -p Plugins Data Logs)",
-      "Bash(rm -rf \"F:/Programs/project/publish/release-2.0.1\" && echo \"cleaned old publish\")"
+      "Bash(rm -rf \"F:/Programs/project/publish/release-2.0.1\" && echo \"cleaned old publish\")",
+      "Bash(curl -sI --max-time 8 \"https://raw.githubusercontent.com/Yu0uki/EfficiencyWorkshop.Plugins/main/index.json\")",
+      "Bash(curl -sI --max-time 8 \"https://api.github.com/repos/Yu0uki/EfficiencyWorkshop.Plugins\")",
+      "Bash(curl -sI --max-time 8 \"https://raw.githubusercontent.com/Yu0uki/EfficiencyWorkshop.Plugins/main/Plugins/WorldClockPlugin.dll\")",
+      "Bash(curl -s --max-time 8 \"https://raw.githubusercontent.com/Yu0uki/EfficiencyWorkshop.Plugins/main/index.json\")",
+      "Bash(curl -sL \"https://raw.githubusercontent.com/Yu0uki/EfficiencyWorkshop.Plugins/main/index.json\")"
     ],
     "additionalDirectories": [
       "F:\\Programs\\project\\publish\\release-2.0.1"
