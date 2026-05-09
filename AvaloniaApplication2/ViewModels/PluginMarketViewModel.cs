@@ -312,6 +312,16 @@ namespace AvaloniaApplication2.ViewModels
                 plugin.InstallStatus = "已安装";
                 StatusMessage = $"{plugin.Name} 安装成功";
                 notify.ShowSuccess($"插件安装成功: {plugin.Name} v{plugin.Version}");
+
+                // 自动在侧边栏中激活插件
+                var mainVM = DependencyInjection.ServiceContainer.GetService<MainWindowViewModel>();
+                if (mainVM != null)
+                {
+                    _pluginManager.StartPlugin(plugin.Id);
+                    _pluginManager.ActivatePlugin(plugin.Id);
+                    mainVM.NavigateToPluginCommand.Execute(plugin.Id);
+                }
+
                 UpdateFilteredView();
             }
             catch (Exception ex)

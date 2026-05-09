@@ -283,6 +283,9 @@ namespace AvaloniaApplication2.Services
         /// </summary>
         public async Task LoadPluginsAsync()
         {
+            // 启动时清理回收站残留（此时无插件加载，文件句柄均已释放）
+            CleanupRecycleBinAtStartup();
+
             if (!_settingsService.Settings.AutoLoadPlugins)
             {
                 _logger.Information("自动加载插件已禁用");
@@ -354,12 +357,15 @@ namespace AvaloniaApplication2.Services
                         _notificationService.ShowWarning($"安全警告: {scan.FileName} 风险等级{scan.RiskLevel}");
                 }
 
-                // 创建隔离的加载上下文
+                // 创建隔离的加载上下文（解析器用原始路径查找依赖）
                 var context = new PluginLoadContext(dllPath);
                 Assembly assembly;
                 try
                 {
-                    assembly = context.LoadFromAssemblyPath(Path.GetFullPath(dllPath));
+                    // 从内存加载，避免 AssemblyLoadContext 锁定 DLL 文件
+                    var assemblyBytes = await File.ReadAllBytesAsync(Path.GetFullPath(dllPath));
+                    using var ms = new MemoryStream(assemblyBytes);
+                    assembly = context.LoadFromStream(ms);
                 }
                 catch (Exception ex)
                 {
@@ -453,8 +459,9 @@ namespace AvaloniaApplication2.Services
                     hotReloadManager.StartWatching(plugin.Id, dllPath);
                 }
 
-                // 插件加载后自动启动，通知侧边栏显示
-                PluginStateChanged?.Invoke(plugin.Id, PluginStateChange.Started);
+                // 插件加载后自动启动，通知侧边栏显示（确保 UI 线程）
+                var pid = plugin.Id;
+                RunOnUI(() => PluginStateChanged?.Invoke(pid, PluginStateChange.Started));
 
                 return plugin;
             }
@@ -523,7 +530,7 @@ namespace AvaloniaApplication2.Services
                         GC.WaitForPendingFinalizers();
                     }
 
-                    PluginStateChanged?.Invoke(pluginId, PluginStateChange.Unloaded);
+                    RunOnUI(() => PluginStateChanged?.Invoke(pluginId, PluginStateChange.Unloaded));
 
                     _logger.Information("插件已卸载: {PluginId}", pluginId);
                     _notificationService.ShowInfo($"插件已卸载: {plugin.Name}");
@@ -597,9 +604,9 @@ namespace AvaloniaApplication2.Services
                     plugin.Deactivate();
                 }
                 
-                // 触发状态改变事件
-                PluginStateChanged?.Invoke(pluginId, PluginStateChange.Stopped);
-                
+                // 触发状态改变事件（确保 UI 线程）
+                RunOnUI(() => PluginStateChanged?.Invoke(pluginId, PluginStateChange.Stopped));
+
                 _logger.Information("插件已停止运行: {PluginId}", pluginId);
                 _notificationService.ShowInfo($"插件已停止: {pluginInfo.Name}");
             }
@@ -621,9 +628,9 @@ namespace AvaloniaApplication2.Services
                     plugin.Activate();
                 }
                 
-                // 触发状态改变事件
-                PluginStateChanged?.Invoke(pluginId, PluginStateChange.Started);
-                
+                // 触发状态改变事件（确保 UI 线程）
+                RunOnUI(() => PluginStateChanged?.Invoke(pluginId, PluginStateChange.Started));
+
                 _logger.Information("插件已启动运行: {PluginId}", pluginId);
                 _notificationService.ShowSuccess($"插件已启动: {pluginInfo.Name}");
             }
@@ -754,8 +761,39 @@ namespace AvaloniaApplication2.Services
         }
 
         /// <summary>
-        /// 清空回收站
+        /// 清空回收站（含重试和 GC 清理）
         /// </summary>
+        /// <summary>
+        /// 启动时清理回收站残留（此时无插件加载，文件不会被锁定）
+        /// </summary>
+        private void CleanupRecycleBinAtStartup()
+        {
+            var recycleDir = Path.Combine(_pluginsDirectory, ".recycle");
+            if (!Directory.Exists(recycleDir)) return;
+
+            var files = Directory.GetFiles(recycleDir, "*", SearchOption.AllDirectories);
+            if (files.Length == 0) return;
+
+            var cleaned = 0;
+            foreach (var file in files)
+            {
+                try
+                {
+                    var attrs = File.GetAttributes(file);
+                    if ((attrs & FileAttributes.ReadOnly) != 0)
+                        File.SetAttributes(file, attrs & ~FileAttributes.ReadOnly);
+                    File.Delete(file);
+                    cleaned++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.Warning(ex, "启动清理回收站失败（将在下次启动重试）: {File}", file);
+                }
+            }
+            if (cleaned > 0)
+                _logger.Information("启动时清理回收站: {Cleaned}/{Total} 个文件", cleaned, files.Length);
+        }
+
         public void EmptyRecycleBin()
         {
             var recycleDir = Path.Combine(_pluginsDirectory, ".recycle");
@@ -772,31 +810,61 @@ namespace AvaloniaApplication2.Services
                 return;
             }
 
+            // 强制 GC 释放 AssemblyLoadContext 持有的文件句柄
+            for (var i = 0; i < 3; i++)
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                System.Threading.Thread.Sleep(100);
+            }
+
             var deleted = 0;
             var failed = 0;
             foreach (var file in files)
             {
-                try
-                {
-                    // 先清除只读属性（防止 File.Delete 失败）
-                    var attrs = File.GetAttributes(file);
-                    if ((attrs & FileAttributes.ReadOnly) != 0)
-                        File.SetAttributes(file, attrs & ~FileAttributes.ReadOnly);
-
-                    File.Delete(file);
+                if (TryDeleteFileWithRetry(file, out var errorMsg))
                     deleted++;
-                }
-                catch (Exception ex)
+                else
                 {
                     failed++;
-                    _logger.Error(ex, "清空回收站失败: {File}", file);
+                    _logger.Error("清空回收站失败({Retries}): {File} - {Error}", 3, file, errorMsg);
                 }
             }
 
             if (failed == 0)
                 _notificationService.ShowSuccess($"回收站已清空 ({deleted} 个文件)");
             else
-                _notificationService.ShowWarning($"已删除 {deleted} 个，{failed} 个文件无法删除（可能被占用）");
+                _notificationService.ShowWarning($"已删除 {deleted} 个，{failed} 个文件无法删除（可能被占用，请重启应用后重试）");
+        }
+
+        private static bool TryDeleteFileWithRetry(string filePath, out string? error)
+        {
+            error = null;
+            for (var i = 0; i < 3; i++)
+            {
+                try
+                {
+                    var attrs = File.GetAttributes(filePath);
+                    if ((attrs & FileAttributes.ReadOnly) != 0)
+                        File.SetAttributes(filePath, attrs & ~FileAttributes.ReadOnly);
+
+                    File.Delete(filePath);
+                    return true;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    error = ex.Message;
+                    System.Threading.Thread.Sleep(200);
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
+                catch (Exception ex)
+                {
+                    error = ex.Message;
+                    return false;
+                }
+            }
+            return false;
         }
     }
 }
