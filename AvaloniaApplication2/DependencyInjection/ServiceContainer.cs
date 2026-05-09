@@ -46,6 +46,7 @@ namespace AvaloniaApplication2.DependencyInjection
             services.AddSingleton<PluginHotReloadManager>();
             services.AddSingleton<SettingsSyncService>();
             services.AddSingleton<ClipboardService>();
+            services.AddSingleton<PluginSecurityService>();
             services.AddSingleton<GlobalExceptionHandler>();
 
             // 注册 ViewModel（Transient，每次请求创建新实例）

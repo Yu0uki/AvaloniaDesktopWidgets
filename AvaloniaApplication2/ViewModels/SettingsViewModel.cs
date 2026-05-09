@@ -64,6 +64,9 @@ namespace AvaloniaApplication2.ViewModels
         // 搜索历史
         [ObservableProperty] private bool enableSearchHistory = true;
 
+        // 安全检测
+        [ObservableProperty] private bool enableSecurityScan = true;
+
         // 设置同步
         [ObservableProperty] private bool syncEnabled;
         [ObservableProperty] private bool autoSync;
@@ -355,6 +358,13 @@ namespace AvaloniaApplication2.ViewModels
         {
             _settingsService.Settings.PluginMarketUrl = value;
             _ = _settingsService.SaveSettingsAsync();
+        }
+
+        // 安全检测自动保存
+        partial void OnEnableSecurityScanChanged(bool value)
+        {
+            var secService = DependencyInjection.ServiceContainer.GetService<PluginSecurityService>();
+            if (secService != null) secService.Enabled = value;
         }
 
         // 搜索历史自动保存

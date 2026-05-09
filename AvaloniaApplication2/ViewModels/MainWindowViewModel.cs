@@ -269,6 +269,7 @@ namespace AvaloniaApplication2.ViewModels
             _unreadCount = 0;
             UnreadNotificationCount = 0;
             HasUnreadNotifications = false;
+            IsNotificationCenterOpen = false;
             UpdateNotificationSummary();
         }
 

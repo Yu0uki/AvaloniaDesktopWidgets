@@ -201,6 +201,7 @@ namespace AvaloniaApplication2
         {
             if (_viewModel == null) return;
             _viewModel.ShowSearchHistory = false;
+            _viewModel.IsNotificationCenterOpen = false;
             if (_viewModel.CurrentPage is ViewModels.DashboardViewModel dvm)
                 dvm.ClipboardExpanded = false;
         }
